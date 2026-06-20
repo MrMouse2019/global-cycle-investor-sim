@@ -85,6 +85,7 @@ export const allocationSchema = z.object({
   selectedMarketId: marketIdSchema.optional(),
   selectedSectorId: sectorIdSchema.optional(),
   selectedStocks: z.array(z.string()).optional(),
+  stockWeights: z.record(z.string(), z.number().min(0).max(1)).optional(),
 }) as z.ZodType<Allocation>
 
 export const stockSchema = z.object({

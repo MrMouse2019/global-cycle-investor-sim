@@ -18,4 +18,15 @@ describe('redesigned annual UI', () => {
 
     expect(screen.getByText('延续去年配置')).toBeInTheDocument()
   })
+
+  it('renders allocation as a vertical flow without duplicate target dropdowns', () => {
+    render(<AllocationPage />)
+
+    expect(screen.getByText('策略模板')).toBeInTheDocument()
+    expect(screen.getByText('市场权重')).toBeInTheDocument()
+    expect(screen.getByText('板块权重')).toBeInTheDocument()
+    expect(screen.queryByText('目标市场')).not.toBeInTheDocument()
+    expect(screen.queryByText('目标板块')).not.toBeInTheDocument()
+    expect(screen.getByText('提交配置并结算')).toBeInTheDocument()
+  })
 })

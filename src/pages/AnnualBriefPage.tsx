@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { markets } from '../data/markets/markets'
 import { sectors } from '../data/sectors/sectors'
 import { getDisplayYearLabel } from '../domain/simulation/engine'
@@ -7,6 +8,7 @@ import { Card } from '../shared/ui/Card'
 
 export function AnnualBriefPage() {
   const { game, goToAllocation } = useGameStore()
+  const [showNpcBubble, setShowNpcBubble] = useState(true)
   const scenario = getCurrentScenario(game)
   const preferredMarkets = markets.filter((market) => scenario.preferredMarkets.includes(market.id))
   const preferredSectors = sectors.filter((sector) => scenario.preferredSectors.includes(sector.id))
@@ -25,9 +27,17 @@ export function AnnualBriefPage() {
         <p className="text-sm font-semibold text-gold">{getDisplayYearLabel(game)}</p>
         <h2 className="mt-2 text-3xl font-black">{scenario.title}</h2>
         <p className="mt-2 text-sm font-semibold text-slate-500">真实历史年份：{scenario.historicalYear}</p>
-        {game.npcMessages[0] ? (
-          <div className="mt-4 rounded-2xl bg-ink p-4 text-sm font-semibold leading-6 text-white">
-            {game.npcMessages[0].text}
+        {game.npcMessages[0] && showNpcBubble ? (
+          <div className="fixed right-4 top-24 z-20 max-w-sm rounded-2xl bg-ink p-4 text-sm font-semibold leading-6 text-white shadow-2xl">
+            <button
+              className="absolute right-3 top-2 text-white/50 hover:text-white"
+              onClick={() => setShowNpcBubble(false)}
+              type="button"
+              aria-label="关闭吐槽"
+            >
+              x
+            </button>
+            <p className="pr-5">{game.npcMessages[0].text}</p>
           </div>
         ) : null}
         <p className="mt-4 rounded-2xl bg-gold/10 p-4 text-sm font-semibold leading-6 text-slate-800">{scenario.summary}</p>
@@ -42,8 +52,8 @@ export function AnnualBriefPage() {
             <p className="mt-1">{game.pendingDecision.prompt}</p>
           </div>
         ) : null}
-        <details className="mt-6 rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-700">
-          <summary className="cursor-pointer font-black text-slate-900">展开完整历史背景</summary>
+        <details className="mt-6 rounded-3xl border border-gold/30 bg-gold/10 p-5 text-sm leading-6 text-slate-700">
+          <summary className="cursor-pointer text-lg font-black text-slate-900">展开完整历史背景</summary>
           <div className="mt-4 grid gap-3">
             <TextBlock label="宏观主线" value={scenario.macroMainline} />
             <TextBlock label="货币政策" value={scenario.monetaryPolicyDetail} />
@@ -97,14 +107,20 @@ export function AnnualBriefPage() {
         </Card>
         <Card>
           <h3 className="text-lg font-bold">主要市场历史表现</h3>
-          <div className="mt-3 grid gap-2">
+          <p className="mt-2 text-sm font-semibold text-slate-600">
+            {preferredMarkets.map((market) => market.name).join('、')}相对有戏，逆风板块别急着拿命赌反转。
+          </p>
+          <details className="mt-3 rounded-2xl bg-slate-50 p-3 text-sm">
+            <summary className="cursor-pointer font-black text-slate-700">展开各市场明细</summary>
+            <div className="mt-3 grid gap-2">
             {marketPerformance.map((item) => (
               <div key={item.id} className="rounded-2xl bg-slate-50 p-3 text-sm leading-6">
                 <span className="font-bold text-slate-900">{item.name}</span>
                 <span className="ml-2 text-slate-600">{item.text}</span>
               </div>
             ))}
-          </div>
+            </div>
+          </details>
         </Card>
       </div>
       </div>

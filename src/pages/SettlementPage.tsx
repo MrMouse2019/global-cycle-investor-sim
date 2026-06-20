@@ -1,6 +1,5 @@
 import { calculatePlayerPercentile } from '../domain/simulation/engine'
 import { useGameStore } from '../features/campaign-flow/gameStore'
-import { DISCLAIMER } from '../shared/constants/app'
 import { formatMoney, formatPercent } from '../shared/lib/format'
 import { Button } from '../shared/ui/Button'
 import { Card } from '../shared/ui/Card'
@@ -124,7 +123,6 @@ export function SettlementPage() {
             </div>
           </div>
         ) : null}
-        <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">{DISCLAIMER}</div>
         <div className="mt-6 flex flex-wrap gap-3">
           <Button onClick={goToReview}>{result.liquidation.liquidated ? '查看退出结局' : '进入下一年推演'}</Button>
           {!result.liquidation.liquidated && !prompt ? (
@@ -168,10 +166,7 @@ export function SettlementPage() {
           <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-100">
             <div className="h-full rounded-full bg-gold" style={{ width: `${ranking.percentile}%` }} />
           </div>
-          <p className="mt-3 text-sm leading-6 text-slate-600">{ranking.description}</p>
-          <p className="mt-2 text-xs text-slate-500">
-            基于 {ranking.peerCount.toLocaleString('zh-CN')} 名模拟玩家收益、年化表现与回撤控制生成动态分位。
-          </p>
+          <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">{ranking.description}</p>
         </Card>
         <Card>
           <h3 className="text-lg font-bold">年度事件</h3>

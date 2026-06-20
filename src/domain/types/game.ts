@@ -178,6 +178,7 @@ export type StockRecommendationInput = {
   year: number
   marketId: MarketId
   sectorId: SectorId
+  style?: Stock['style']
   scenario: YearScenario
 }
 
@@ -197,6 +198,7 @@ export type Allocation = {
   selectedMarketId?: MarketId
   selectedSectorId?: SectorId
   selectedStocks?: string[]
+  stockWeights?: Record<string, number>
   eventDecisionOptionId?: string
   followedNpcSignal?: boolean
 }

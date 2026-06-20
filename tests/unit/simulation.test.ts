@@ -89,6 +89,49 @@ describe('simulation engine', () => {
     expect(recommendations.every((stock) => stock.marketId === 'us' || stock.sectorId === 'technology')).toBe(true)
   })
 
+  it('keeps refreshed recommendations inside the selected market', () => {
+    const recommendations = recommendStocks({
+      year: 10,
+      marketId: 'us',
+      sectorId: 'technology',
+      scenario: scenarios[9],
+    })
+
+    expect(recommendations).toHaveLength(6)
+    expect(recommendations.every((stock) => stock.marketId === 'us')).toBe(true)
+  })
+
+  it('has enough candidates for every market and stock style', () => {
+    const markets = ['a-share', 'h-share', 'us', 'japan', 'taiwan', 'korea'] as const
+    const styles = ['leader', 'growth', 'cyclical', 'defensive'] as const
+
+    markets.forEach((marketId) => {
+      styles.forEach((style) => {
+        expect(
+          stockPool.filter((stock) => stock.marketId === marketId && stock.style === style).length,
+          `${marketId} should have enough ${style} candidates`,
+        ).toBeGreaterThanOrEqual(3)
+      })
+    })
+  })
+
+  it('allows mixed-market selected stocks with explicit stock weights', () => {
+    const allocation = {
+      ...allocationTemplates.growth,
+      selectedStocks: ['us-technology-nvidia', 'a-share-technology-foxconn', 'h-share-technology-tencent'],
+      stockWeights: {
+        'us-technology-nvidia': 0.34,
+        'a-share-technology-foxconn': 0.33,
+        'h-share-technology-tencent': 0.33,
+      },
+    }
+
+    expect(validateAllocation(allocation)).toEqual([])
+
+    const result = simulateYear(createInitialGame(), scenarios.find((item) => item.historicalYear === 2023)!, allocation)
+    expect(result.stockResult.entries.map((entry) => entry.stock.marketId)).toEqual(['us', 'a-share', 'h-share'])
+  })
+
   it('adds selected heavy stock return to annual settlement', () => {
     const game = createInitialGame()
     const recommendation = recommendStocks({

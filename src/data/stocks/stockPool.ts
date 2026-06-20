@@ -60,7 +60,7 @@ export const stockPool: Stock[] = [
   stock('a-share-defense-ziyan', '中航光电', 'a-share', 'defense', 'growth', 0.08, 0.25, 70, '军工电子连接器代表，成长与订单节奏相关。'),
   stock('a-share-agriculture-muyuan', '牧原股份', 'a-share', 'agriculture', 'cyclical', 0.08, 0.33, 76, '生猪养殖龙头，猪周期带来明显波动。'),
   stock('a-share-agriculture-haid', '海大集团', 'a-share', 'agriculture', 'defensive', 0.07, 0.21, 71, '饲料和养殖服务代表，周期波动相对温和。'),
-  stock('h-share-consumer-meituan', '美团-W', 'h-share', 'consumer', 'growth', 0.12, 0.35, 92, '本地生活平台代表，增长和竞争格局共同驱动估值。'),
+  stock('h-share-consumer-meituan', '美团-W', 'h-share', 'consumer', 'cyclical', 0.12, 0.35, 92, '本地生活平台代表，增长和竞争格局共同驱动估值。'),
   stock('h-share-consumer-anta', '安踏体育', 'h-share', 'consumer', 'growth', 0.09, 0.26, 78, '运动消费龙头，品牌矩阵和消费景气相关。'),
   stock('h-share-technology-tencent', '腾迅控股', 'h-share', 'technology', 'leader', 0.1, 0.25, 98, '平台老炮，反弹时像龙头，监管时像沙包。'),
   stock('h-share-technology-smic', '中芯国际', 'h-share', 'technology', 'growth', 0.09, 0.34, 82, '晶圆代工代表，产业政策与景气周期影响显著。'),
@@ -69,39 +69,39 @@ export const stockPool: Stock[] = [
   stock('h-share-financials-aia', '友邦保险', 'h-share', 'financials', 'defensive', 0.06, 0.2, 76, '亚洲保险龙头，长期保障需求稳定。'),
   stock('h-share-healthcare-wuxi', '药明生物', 'h-share', 'healthcare', 'growth', 0.08, 0.36, 74, 'CXO 代表，订单和政策预期带来高波动。'),
   stock('h-share-healthcare-cspc', '石药集团', 'h-share', 'healthcare', 'defensive', 0.06, 0.22, 62, '制药代表，创新药转型影响估值。'),
-  stock('h-share-new-energy-gcl', '协鑫科技', 'h-share', 'new-energy', 'cyclical', 0.08, 0.38, 66, '光伏材料代表，价格周期波动明显。'),
+  stock('h-share-new-energy-gcl', '协鑫科技', 'h-share', 'new-energy', 'defensive', 0.08, 0.38, 66, '光伏材料代表，价格周期波动明显。'),
   stock('h-share-metals-jiangxi-copper', '江西铜业股份', 'h-share', 'metals', 'cyclical', 0.08, 0.29, 63, '铜周期代表，受全球制造需求影响。'),
   stock('h-share-defense-casic', '中航科工', 'h-share', 'defense', 'leader', 0.07, 0.24, 58, '军工央企代表，订单和政策预期较关键。'),
   stock('h-share-agriculture-wh-group', '万洲国际', 'h-share', 'agriculture', 'defensive', 0.05, 0.19, 60, '肉制品代表，消费稳定但利润受成本影响。'),
-  stock('japan-technology-sony', '索尼', 'japan', 'technology', 'leader', 0.08, 0.23, 86, '消费电子、游戏与影像龙头，业务多元。'),
+  stock('japan-technology-sony', '索尼', 'japan', 'technology', 'defensive', 0.08, 0.23, 86, '消费电子、游戏与影像龙头，业务多元。'),
   stock('japan-technology-tokyo-electron', '东京电子', 'japan', 'technology', 'growth', 0.11, 0.31, 88, '半导体设备代表，芯片资本开支周期敏感。'),
-  stock('japan-technology-keyence', '基恩士', 'japan', 'technology', 'leader', 0.09, 0.22, 80, '工业自动化龙头，高利润率但估值较高。'),
-  stock('japan-consumer-fast-retailing', '迅销', 'japan', 'consumer', 'leader', 0.08, 0.21, 82, '优衣库母公司，全球消费品牌代表。'),
-  stock('japan-consumer-shiseido', '资生堂', 'japan', 'consumer', 'turnaround', 0.06, 0.27, 65, '化妆品代表，受中国消费和旅游恢复影响。'),
+  stock('japan-technology-keyence', '基恩士', 'japan', 'technology', 'defensive', 0.09, 0.22, 80, '工业自动化龙头，高利润率但估值较高。'),
+  stock('japan-consumer-fast-retailing', '迅销', 'japan', 'consumer', 'defensive', 0.08, 0.21, 82, '优衣库母公司，全球消费品牌代表。'),
+  stock('japan-consumer-shiseido', '资生堂', 'japan', 'consumer', 'growth', 0.06, 0.27, 65, '化妆品代表，受中国消费和旅游恢复影响。'),
   stock('japan-financials-mufg', '三菱日联金融', 'japan', 'financials', 'leader', 0.07, 0.2, 78, '日本大型银行，受利率正常化影响。'),
   stock('japan-financials-sumitomo', '三井住友金融', 'japan', 'financials', 'leader', 0.07, 0.19, 72, '银行金融代表，盈利受息差改善驱动。'),
-  stock('japan-healthcare-takeda', '武田制药', 'japan', 'healthcare', 'defensive', 0.05, 0.16, 68, '制药龙头，防御属性较强。'),
+  stock('japan-healthcare-takeda', '武田制药', 'japan', 'healthcare', 'growth', 0.05, 0.16, 68, '制药龙头，防御属性较强。'),
   stock('japan-new-energy-panasonic', '松下控股', 'japan', 'new-energy', 'cyclical', 0.06, 0.24, 66, '电池与制造代表，受新能源周期影响。'),
   stock('japan-metals-nippon-steel', '日本制铁', 'japan', 'metals', 'cyclical', 0.07, 0.26, 62, '钢铁周期代表，需求和成本影响盈利。'),
-  stock('japan-defense-mitsubishi-heavy', '三菱重工', 'japan', 'defense', 'leader', 0.08, 0.23, 76, '防务和工业设备代表，政策订单支撑较强。'),
-  stock('japan-agriculture-kubota', '久保田', 'japan', 'agriculture', 'defensive', 0.05, 0.18, 60, '农业机械代表，全球农业资本开支相关。'),
+  stock('japan-defense-mitsubishi-heavy', '三菱重工', 'japan', 'defense', 'cyclical', 0.08, 0.23, 76, '防务和工业设备代表，政策订单支撑较强。'),
+  stock('japan-agriculture-kubota', '久保田', 'japan', 'agriculture', 'growth', 0.05, 0.18, 60, '农业机械代表，全球农业资本开支相关。'),
   stock('taiwan-technology-tsmc', '台晶电', 'taiwan', 'technology', 'leader', 0.12, 0.28, 100, '晶圆代工核心位，AI 热起来它先被资金围观。'),
-  stock('taiwan-technology-mediatek', '联发科', 'taiwan', 'technology', 'growth', 0.1, 0.3, 82, '手机和边缘芯片代表，消费电子周期敏感。'),
+  stock('taiwan-technology-mediatek', '联发科', 'taiwan', 'technology', 'defensive', 0.1, 0.3, 82, '手机和边缘芯片代表，消费电子周期敏感。'),
   stock('taiwan-technology-hon-hai', '鸿海', 'taiwan', 'technology', 'leader', 0.07, 0.22, 80, '电子制造龙头，AI 服务器带来新弹性。'),
   stock('taiwan-technology-asus', '华硕', 'taiwan', 'technology', 'cyclical', 0.07, 0.27, 62, 'PC 与硬件代表，消费电子周期明显。'),
-  stock('taiwan-consumer-uni-president', '统一企业', 'taiwan', 'consumer', 'defensive', 0.05, 0.15, 62, '食品消费代表，防御属性较强。'),
-  stock('taiwan-consumer-hotai', '和泰车', 'taiwan', 'consumer', 'leader', 0.06, 0.18, 58, '汽车销售代表，消费和车市景气相关。'),
+  stock('taiwan-consumer-uni-president', '统一企业', 'taiwan', 'consumer', 'growth', 0.05, 0.15, 62, '食品消费代表，防御属性较强。'),
+  stock('taiwan-consumer-hotai', '和泰车', 'taiwan', 'consumer', 'defensive', 0.06, 0.18, 58, '汽车销售代表，消费和车市景气相关。'),
   stock('taiwan-financials-cathay', '国泰金控', 'taiwan', 'financials', 'leader', 0.05, 0.19, 60, '金融控股代表，利率和资本市场影响明显。'),
   stock('taiwan-financials-fubon', '富邦金控', 'taiwan', 'financials', 'leader', 0.05, 0.18, 58, '保险与银行综合金融代表。'),
-  stock('taiwan-healthcare-medigen', '高端疫苗', 'taiwan', 'healthcare', 'turnaround', 0.05, 0.38, 42, '生技题材代表，研发和政策不确定性高。'),
+  stock('taiwan-healthcare-medigen', '高端疫苗', 'taiwan', 'healthcare', 'growth', 0.05, 0.38, 42, '生技题材代表，研发和政策不确定性高。'),
   stock('taiwan-new-energy-delta', '台达电', 'taiwan', 'new-energy', 'leader', 0.09, 0.24, 78, '电源和节能系统龙头，AI 电源需求驱动。'),
   stock('taiwan-metals-china-steel', '中钢', 'taiwan', 'metals', 'cyclical', 0.04, 0.22, 50, '钢铁周期代表，需求复苏时弹性更明显。'),
   stock('taiwan-defense-aerospace', '汉翔航空', 'taiwan', 'defense', 'cyclical', 0.06, 0.26, 54, '航空与防务代表，订单节奏影响估值。'),
   stock('korea-technology-samsung', '三新电子', 'korea', 'technology', 'leader', 0.1, 0.27, 98, '存储周期弹簧床，景气上来能弹，低谷也真硌人。'),
   stock('korea-technology-sk-hynix', 'SK海力士', 'korea', 'technology', 'growth', 0.13, 0.34, 92, '存储芯片代表，AI 服务器需求带来高弹性。'),
-  stock('korea-consumer-coupang', 'Coupang', 'korea', 'consumer', 'growth', 0.09, 0.32, 72, '韩国电商平台代表，利润改善驱动估值。'),
-  stock('korea-consumer-amorepacific', '爱茉莉太平洋', 'korea', 'consumer', 'turnaround', 0.05, 0.28, 58, '美妆消费代表，受亚洲消费景气影响。'),
-  stock('korea-financials-kb', 'KB金融集团', 'korea', 'financials', 'leader', 0.06, 0.2, 62, '韩国银行代表，息差和信用周期驱动。'),
+  stock('korea-consumer-coupang', 'Coupang', 'korea', 'consumer', 'leader', 0.09, 0.32, 72, '韩国电商平台代表，利润改善驱动估值。'),
+  stock('korea-consumer-amorepacific', '爱茉莉太平洋', 'korea', 'consumer', 'defensive', 0.05, 0.28, 58, '美妆消费代表，受亚洲消费景气影响。'),
+  stock('korea-financials-kb', 'KB金融集团', 'korea', 'financials', 'defensive', 0.06, 0.2, 62, '韩国银行代表，息差和信用周期驱动。'),
   stock('korea-financials-shinhan', '新韩金融', 'korea', 'financials', 'defensive', 0.05, 0.19, 58, '综合金融代表，波动低于出口周期资产。'),
   stock('korea-new-energy-lg-energy', 'LG新能源', 'korea', 'new-energy', 'leader', 0.1, 0.35, 84, '动力电池代表，行业价格竞争影响较大。'),
   stock('korea-new-energy-posco-future', '浦项未来M', 'korea', 'new-energy', 'cyclical', 0.09, 0.37, 70, '电池材料代表，新能源链条周期波动强。'),
@@ -111,7 +111,7 @@ export const stockPool: Stock[] = [
   stock('korea-agriculture-cj-cheiljedang', 'CJ第一制糖', 'korea', 'agriculture', 'defensive', 0.05, 0.18, 56, '食品和生物业务代表，抗周期属性较好。'),
   stock('us-defense-lockheed', '洛克希德马丁', 'us', 'defense', 'defensive', 0.06, 0.18, 74, '全球防务龙头，订单稳定但成长弹性有限。'),
   stock('us-agriculture-deere', '迪尔股份', 'us', 'agriculture', 'cyclical', 0.07, 0.24, 66, '农业机械龙头，农产品价格和资本开支驱动。'),
-  stock('h-share-consumer-li-ning', '李宁', 'h-share', 'consumer', 'turnaround', 0.06, 0.32, 64, '运动服饰代表，品牌周期和库存周期影响明显。'),
+  stock('h-share-consumer-li-ning', '李宁', 'h-share', 'consumer', 'cyclical', 0.06, 0.32, 64, '运动服饰代表，品牌周期和库存周期影响明显。'),
   stock('japan-consumer-toyota', '丰田汽车', 'japan', 'consumer', 'leader', 0.07, 0.2, 84, '全球汽车龙头，汇率和销量周期影响收益。'),
   stock('a-share-technology-luxshare', '立讯精密', 'a-share', 'technology', 'growth', 0.09, 0.28, 80, '消费电子制造龙头，产业链需求影响明显。'),
   stock('a-share-consumer-midea', '美的集团', 'a-share', 'consumer', 'leader', 0.07, 0.18, 86, '家电龙头，现金流稳健且全球化推进。'),
@@ -133,14 +133,16 @@ const preferenceSeed = (year: number, marketId: MarketId, sectorId: SectorId) =>
 function rankStock(stock: Stock, input: StockRecommendationInput) {
   const marketMatch = stock.marketId === input.marketId ? 80 : input.scenario.preferredMarkets.includes(stock.marketId) ? 24 : 0
   const sectorMatch = stock.sectorId === input.sectorId ? 90 : input.scenario.preferredSectors.includes(stock.sectorId) ? 26 : 0
+  const styleMatch = input.style && stock.style === input.style ? 48 : 0
   const warningPenalty = input.scenario.warningSectors.includes(stock.sectorId) ? 36 : 0
   const styleBonus = stock.style === 'leader' ? 14 : stock.style === 'growth' ? 8 : stock.style === 'defensive' ? 4 : 0
-  return marketMatch + sectorMatch + stock.popularity * 0.8 + styleBonus - warningPenalty
+  return marketMatch + sectorMatch + styleMatch + stock.popularity * 0.8 + styleBonus - warningPenalty
 }
 
 export function recommendStocks(input: StockRecommendationInput): Stock[] {
   const seed = preferenceSeed(input.year, input.marketId, input.sectorId)
-  const ranked = [...stockPool].sort((left, right) => {
+  const marketStocks = stockPool.filter((stock) => stock.marketId === input.marketId)
+  const ranked = [...marketStocks].sort((left, right) => {
     const scoreDelta = rankStock(right, input) - rankStock(left, input)
     if (Math.abs(scoreDelta) > 0.01) return scoreDelta
     const leftNoise = (preferenceSeed(seed + left.popularity, left.marketId, left.sectorId) % 17) / 100
@@ -148,21 +150,21 @@ export function recommendStocks(input: StockRecommendationInput): Stock[] {
     return rightNoise - leftNoise
   })
 
-  const exactMatches = ranked.filter((stock) => stock.marketId === input.marketId && stock.sectorId === input.sectorId)
+  const styleMatches = input.style ? ranked.filter((stock) => stock.style === input.style) : []
+  const exactMatches = ranked.filter((stock) => stock.sectorId === input.sectorId && (!input.style || stock.style === input.style))
   const adjacentMatches = ranked.filter(
     (stock) =>
-      (stock.marketId === input.marketId || stock.sectorId === input.sectorId) &&
+      stock.sectorId === input.sectorId &&
       !exactMatches.includes(stock),
   )
   const cycleMatches = ranked.filter(
     (stock) =>
-      (input.scenario.preferredMarkets.includes(stock.marketId) ||
-        input.scenario.preferredSectors.includes(stock.sectorId)) &&
+      (input.scenario.preferredSectors.includes(stock.sectorId) || (input.style ? stock.style === input.style : false)) &&
       !exactMatches.includes(stock) &&
       !adjacentMatches.includes(stock),
   )
 
-  return [...exactMatches, ...adjacentMatches, ...cycleMatches, ...ranked]
+  return [...exactMatches, ...styleMatches, ...adjacentMatches, ...cycleMatches, ...ranked]
     .filter((stock, index, stocks) => stocks.findIndex((item) => item.id === stock.id) === index)
     .slice(0, 6)
 }
