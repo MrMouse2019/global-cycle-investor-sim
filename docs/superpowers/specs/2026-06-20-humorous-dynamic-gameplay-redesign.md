@@ -154,6 +154,8 @@ Required details:
 - Penalize high turnover and concentrated exposure over 60%.
 - Show selected stock cards with one short meme-like description, not long industry logic.
 - Preserve the player’s previous allocation in state so changes can be compared.
+- Make the visual language closer to a stock trading page: quote-board rows, red/green return chips, mini trend bars/sparklines, market heat tags, and position-style selected stock panels.
+- Each stock card should show estimated volatility, current year event exposure, and a compact `本年影响` label after settlement so players understand why different stock choices produced different results.
 
 Trading loss rule:
 
@@ -162,7 +164,38 @@ Trading loss rule:
 - Add extra cost for a single market or sector over 60%.
 - Costs should be visible in settlement as a roast, such as “一年换三次信仰，手续费先把你教育了一遍.”
 
-### 5. Dynamic UI
+### 5. Stock Price and Event Impact Feedback
+
+Players must be able to feel that choosing different stocks matters. The app does not need live prices or real K-lines, but it should show a simulated stock-page experience.
+
+Required UI:
+
+- Allocation stock pool should look more like a market watchlist than generic cards.
+- Each recommended stock row/card should show:
+  - desensitized stock name
+  - market and sector
+  - expected style badge, such as `成长票`, `周期票`, `防御票`
+  - simulated volatility chip
+  - event exposure chip, such as `受益AI热`, `怕加息`, `资源逆风`
+  - selected/unselected position state, such as `拟买入`, `持有`, `调出`
+- Selected stocks should appear in a small “持仓篮子” panel with equal or simple display weights.
+- Settlement should show per-selected-stock simulated annual return, not only basket average.
+- The per-stock return line should decompose at least:
+  - base stock profile
+  - market cycle fit
+  - sector cycle fit
+  - event decision impact
+  - stock-specific deterministic shock
+- This breakdown can be visual and compact, but it must be inspectable enough that a player sees why one stock outperformed another.
+
+Domain requirement:
+
+- Extend `StockReturnBreakdown` to include per-stock return entries, not only basket-level average return.
+- Event decisions and black-swan events must apply to stock returns when affected market or affected sector matches.
+- The final annual return should continue to include the selected-stock contribution, so choosing three different stocks changes the year result.
+- Determinism remains required: identical game state, allocation, scenario, and event decision must produce identical per-stock returns.
+
+### 6. Dynamic UI
 
 The interface should feel alive.
 
@@ -298,7 +331,7 @@ UI/component tests should cover:
 - Desktop default experience is the three-tab annual cockpit.
 - Mobile experience is event-first and does not feel like a squeezed desktop table.
 - Long macro copy is hidden behind collapsible details.
-- Annual years differ through events, debuffs, NPC comments, peer/rival pressure, and market state badges.
+- Annual years differ through events, debuffs, NPC comments, peer/rival pressure, simulated stock-board movement, and market state badges.
 - Player has a stronger buy/sell feeling through templates, reuse, filtered stock selection, turnover feedback, and trade costs.
-- Simulation results remain explainable from cycle, market/sector allocation, selected stocks, event decisions, debuffs, trade costs, and concentration.
+- Simulation results remain explainable from cycle, market/sector allocation, per-stock return breakdowns, event decisions, debuffs, trade costs, and concentration.
 - Existing `pnpm test`, `pnpm lint`, and `pnpm build` pass.
