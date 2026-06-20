@@ -10,35 +10,62 @@ import { Button } from '../shared/ui/Button'
 import { Card } from '../shared/ui/Card'
 
 const templateIds = Object.keys(allocationTemplates) as AllocationTemplateId[]
+const stockStyles: Stock['style'][] = ['leader', 'growth', 'cyclical', 'defensive']
+
+function topWeightedId<T extends string>(weights: Record<T, number>): T {
+  return Object.entries(weights).sort((left, right) => Number(right[1]) - Number(left[1]))[0][0] as T
+}
 
 export function AllocationPage() {
   const { game, submitAllocation } = useGameStore()
   const scenario = getCurrentScenario(game)
-  const defaultMarketId = scenario.preferredMarkets[0] ?? 'a-share'
+  const defaultMarketId = scenario.preferredMarkets[0] ?? 'us'
   const defaultSectorId = scenario.preferredSectors[0] ?? 'technology'
   const [allocation, setAllocation] = useState<Allocation>({
     ...allocationTemplates.steady,
     selectedMarketId: defaultMarketId,
     selectedSectorId: defaultSectorId,
     selectedStocks: [],
+    stockWeights: {},
   })
-  const selectedMarketId = allocation.selectedMarketId ?? defaultMarketId
-  const selectedSectorId = allocation.selectedSectorId ?? defaultSectorId
+  const [stockMarketId, setStockMarketId] = useState<MarketId>(defaultMarketId)
+  const [stockSectorId, setStockSectorId] = useState<SectorId>(defaultSectorId)
+  const [stockStyle, setStockStyle] = useState<Stock['style']>('leader')
   const recommendations = recommendStocks({
     year: game.currentYear,
-    marketId: selectedMarketId,
-    sectorId: selectedSectorId,
+    marketId: stockMarketId,
+    sectorId: stockSectorId,
+    style: stockStyle,
     scenario,
   })
   const errors = validateAllocation(allocation)
+  const selectedStockWeights = allocation.stockWeights ?? {}
+  const selectedStockWeightTotal = Object.values(selectedStockWeights).reduce((total, value) => total + value, 0)
 
   function applyTemplate(templateId: AllocationTemplateId) {
+    const template = structuredClone(allocationTemplates[templateId])
     setAllocation((current) => ({
-      ...structuredClone(allocationTemplates[templateId]),
-      selectedMarketId: current.selectedMarketId ?? defaultMarketId,
-      selectedSectorId: current.selectedSectorId ?? defaultSectorId,
+      ...template,
+      selectedMarketId: undefined,
+      selectedSectorId: undefined,
       selectedStocks: templateId === 'cash' ? [] : current.selectedStocks ?? [],
+      stockWeights: templateId === 'cash' ? {} : current.stockWeights ?? {},
     }))
+    if (templateId !== 'cash') {
+      setStockMarketId(topWeightedId(template.marketWeights))
+      setStockSectorId(topWeightedId(template.sectorWeights))
+    }
+  }
+
+  function reusePreviousAllocation() {
+    if (!game.previousAllocation) return
+    setAllocation({
+      ...structuredClone(game.previousAllocation),
+      selectedMarketId: undefined,
+      selectedSectorId: undefined,
+      selectedStocks: game.previousAllocation.selectedStocks ?? [],
+      stockWeights: game.previousAllocation.stockWeights ?? equalStockWeights(game.previousAllocation.selectedStocks ?? []),
+    })
   }
 
   function updateInvestedRatio(value: number) {
@@ -61,41 +88,52 @@ export function AllocationPage() {
     }))
   }
 
-  function updateSelectedMarket(id: MarketId) {
-    setAllocation((current) => ({
-      ...current,
-      selectedMarketId: id,
-      selectedStocks: [],
-    }))
-  }
-
-  function updateSelectedSector(id: SectorId) {
-    setAllocation((current) => ({
-      ...current,
-      selectedSectorId: id,
-      selectedStocks: [],
-    }))
-  }
-
   function toggleStock(stockId: string) {
     setAllocation((current) => {
       const selectedStocks = current.selectedStocks ?? []
       const exists = selectedStocks.includes(stockId)
       if (exists) {
-        return { ...current, selectedStocks: selectedStocks.filter((id) => id !== stockId) }
+        const nextStocks = selectedStocks.filter((id) => id !== stockId)
+        return { ...current, selectedStocks: nextStocks, stockWeights: equalStockWeights(nextStocks) }
       }
       if (selectedStocks.length >= 3) return current
-      return { ...current, selectedStocks: [...selectedStocks, stockId] }
+      const nextStocks = [...selectedStocks, stockId]
+      return { ...current, selectedStocks: nextStocks, stockWeights: equalStockWeights(nextStocks) }
     })
   }
 
+  function updateStockWeight(stockId: string, value: number) {
+    setAllocation((current) => ({
+      ...current,
+      stockWeights: { ...(current.stockWeights ?? {}), [stockId]: value },
+    }))
+  }
+
   return (
-    <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
+    <div className="grid gap-6">
+      <nav className="grid gap-2 rounded-2xl bg-white/80 p-2 shadow-sm sm:grid-cols-3" aria-label="年度驾驶舱">
+        <div className="rounded-xl bg-slate-50 px-4 py-3 text-center text-sm font-black text-slate-500">年度行情速览</div>
+        <div className="rounded-xl bg-ink px-4 py-3 text-center text-sm font-black text-white">一键资产配置</div>
+        <div className="rounded-xl bg-slate-50 px-4 py-3 text-center text-sm font-black text-slate-500">年度结算 & 复盘</div>
+      </nav>
+      <div className="grid gap-6 pb-28">
       <Card>
         <h2 className="text-3xl font-black">年度资产配置</h2>
         <p className="mt-3 text-sm leading-6 text-slate-600">
-          先选择目标市场和板块，再从系统推荐的 6 只股票中挑选 3 只重仓。只有总投入仓位为 0% 时，才会按只持有现金处理并跳过股票选择。
+          像调自选股一样调仓：选模板、看权重、挑 3 只拟买入。现金模式可以跳过股票。
         </p>
+        <h3 className="mt-6 text-lg font-black">策略模板</h3>
+        <button
+          className="mt-5 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm font-black text-slate-700 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={!game.previousAllocation}
+          onClick={reusePreviousAllocation}
+          type="button"
+        >
+          延续去年配置
+          <span className="mt-1 block text-xs font-semibold text-slate-500">
+            {game.previousAllocation ? '不想折腾就少交点情绪税。' : '第一年还没有旧仓位可以继承。'}
+          </span>
+        </button>
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
           {templateIds.map((templateId) => (
             <button
@@ -125,89 +163,77 @@ export function AllocationPage() {
           />
         </div>
         {errors.length ? (
-          <div className="mt-4 rounded-2xl bg-red-50 p-3 text-sm text-red-700">
-            {errors.map((error) => <p key={error}>{error}</p>)}
+          <div className="fixed bottom-24 left-1/2 z-20 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-full bg-amber-100 px-4 py-3 text-sm font-bold text-amber-900 shadow-lg">
+            {errors[0]}
           </div>
         ) : null}
-        <div className="mt-6">
-          <Button onClick={() => submitAllocation(allocation)} disabled={errors.length > 0}>提交配置并结算</Button>
-        </div>
       </Card>
 
       <div className="grid gap-6">
-        <PreferenceSelector
-          selectedMarketId={selectedMarketId}
-          selectedSectorId={selectedSectorId}
-          onMarketChange={updateSelectedMarket}
-          onSectorChange={updateSelectedSector}
-        />
-        <StockSelector
-          disabled={allocation.investedRatio <= 0}
-          recommendations={recommendations}
-          selectedStocks={allocation.selectedStocks ?? []}
-          onToggle={toggleStock}
-        />
-        <WeightEditor title="市场权重" items={markets} weights={allocation.marketWeights} onChange={updateMarket} />
-        <WeightEditor title="板块权重" items={sectors} weights={allocation.sectorWeights} onChange={updateSector} />
+        <WeightEditor collapsed title="市场权重" items={markets} weights={allocation.marketWeights} onChange={updateMarket} />
+        <WeightEditor collapsed title="板块权重" items={sectors} weights={allocation.sectorWeights} onChange={updateSector} />
+      </div>
+      <Card>
+        <h3 className="text-lg font-black">选股筛选器</h3>
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <Segmented
+            label="市场"
+            options={markets.map((market) => ({ id: market.id, name: market.name }))}
+            value={stockMarketId}
+            onChange={(id) => setStockMarketId(id as MarketId)}
+          />
+          <Segmented
+            label="板块"
+            options={sectors.map((sector) => ({ id: sector.id, name: sector.name }))}
+            value={stockSectorId}
+            onChange={(id) => setStockSectorId(id as SectorId)}
+          />
+          <Segmented
+            label="风格"
+            options={stockStyles.map((style) => ({ id: style, name: styleLabel(style) }))}
+            value={stockStyle}
+            onChange={(id) => setStockStyle(id as Stock['style'])}
+          />
+        </div>
+      </Card>
+      <StockSelector
+        disabled={allocation.investedRatio <= 0}
+        previousStocks={game.previousAllocation?.selectedStocks ?? []}
+        recommendations={recommendations}
+        selectedWeights={selectedStockWeights}
+        selectedStocks={allocation.selectedStocks ?? []}
+        onToggle={toggleStock}
+        onWeightChange={updateStockWeight}
+      />
+      </div>
+      <div className="fixed inset-x-0 bottom-0 z-10 border-t border-slate-200 bg-white/95 p-4 shadow-2xl backdrop-blur">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-sm font-semibold text-slate-600">
+            股票篮子 {formatPercent(selectedStockWeightTotal)} · 已选 {(allocation.selectedStocks ?? []).length} / 3
+          </div>
+          <Button onClick={() => submitAllocation(allocation)} disabled={errors.length > 0}>提交配置并结算</Button>
+        </div>
       </div>
     </div>
   )
 }
 
-function PreferenceSelector({
-  selectedMarketId,
-  selectedSectorId,
-  onMarketChange,
-  onSectorChange,
-}: {
-  selectedMarketId: MarketId
-  selectedSectorId: SectorId
-  onMarketChange: (id: MarketId) => void
-  onSectorChange: (id: SectorId) => void
-}) {
-  return (
-    <Card>
-      <h3 className="text-lg font-bold">目标市场与板块</h3>
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <label className="grid gap-2 text-sm font-semibold">
-          目标市场
-          <select
-            className="rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm"
-            onChange={(event) => onMarketChange(event.target.value as MarketId)}
-            value={selectedMarketId}
-          >
-            {markets.map((market) => (
-              <option key={market.id} value={market.id}>{market.name}</option>
-            ))}
-          </select>
-        </label>
-        <label className="grid gap-2 text-sm font-semibold">
-          目标板块
-          <select
-            className="rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm"
-            onChange={(event) => onSectorChange(event.target.value as SectorId)}
-            value={selectedSectorId}
-          >
-            {sectors.map((sector) => (
-              <option key={sector.id} value={sector.id}>{sector.name}</option>
-            ))}
-          </select>
-        </label>
-      </div>
-    </Card>
-  )
-}
-
 function StockSelector({
   disabled,
+  previousStocks,
   recommendations,
+  selectedWeights,
   selectedStocks,
   onToggle,
+  onWeightChange,
 }: {
   disabled: boolean
+  previousStocks: string[]
   recommendations: Stock[]
+  selectedWeights: Record<string, number>
   selectedStocks: string[]
   onToggle: (id: string) => void
+  onWeightChange: (id: string, value: number) => void
 }) {
   return (
     <Card>
@@ -217,36 +243,68 @@ function StockSelector({
           <p className="mt-1 text-sm text-slate-500">{disabled ? '当前为现金模式，可跳过股票选择。' : `已选择 ${selectedStocks.length} / 3 只`}</p>
         </div>
       </div>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+      {selectedStocks.length ? (
+        <div className="mt-4 rounded-2xl bg-slate-950 p-4 text-white">
+          <p className="text-xs font-semibold text-white/50">持仓篮子</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {selectedStocks.map((stockId) => {
+              const stock = recommendations.find((item) => item.id === stockId)
+              return (
+                <span key={stockId} className="rounded-full bg-white/10 px-3 py-2 text-xs font-bold">
+                  {stock?.name ?? stockId} · {previousStocks.includes(stockId) ? '持有' : '拟买入'}
+                </span>
+              )
+            })}
+          </div>
+          <div className="mt-4 grid gap-3">
+            {selectedStocks.map((stockId) => (
+              <label key={stockId} className="grid gap-2 text-xs font-semibold sm:grid-cols-[120px_1fr_56px] sm:items-center">
+                <span>{recommendations.find((item) => item.id === stockId)?.name ?? stockId}</span>
+                <input
+                  className="accent-gold"
+                  max="1"
+                  min="0"
+                  onChange={(event) => onWeightChange(stockId, Number(event.target.value))}
+                  step="0.01"
+                  type="range"
+                  value={selectedWeights[stockId] ?? 0}
+                />
+                <span className="text-right tabular-nums">{formatPercent(selectedWeights[stockId] ?? 0)}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      ) : null}
+      <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 text-white">
         {recommendations.map((stock) => {
           const selected = selectedStocks.includes(stock.id)
           const locked = !selected && selectedStocks.length >= 3
+          const wasHeld = previousStocks.includes(stock.id)
+          const stateLabel = selected ? (wasHeld ? '持有' : '拟买入') : wasHeld ? '调出' : '观望'
           return (
             <button
               key={stock.id}
-              className={`min-h-[132px] rounded-2xl border p-4 text-left transition ${
+              className={`stock-board-row w-full border-b border-white/10 p-4 text-left transition last:border-b-0 ${
                 selected
-                  ? 'border-gold bg-gold/10'
+                  ? 'bg-emerald-500/15'
                   : locked || disabled
-                    ? 'border-slate-100 bg-slate-50 text-slate-400'
-                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                    ? 'bg-slate-900 text-slate-500'
+                    : 'hover:bg-white/5'
               }`}
               disabled={disabled || locked}
               onClick={() => onToggle(stock.id)}
               type="button"
             >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-black">{stock.name}</p>
-                  <p className="mt-1 text-xs font-semibold text-slate-500">
-                    {markets.find((market) => market.id === stock.marketId)?.name} · {sectors.find((sector) => sector.id === stock.sectorId)?.name}
-                  </p>
-                </div>
-                <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">
-                  波动 {formatPercent(stock.volatility)}
-                </span>
+              <div>
+                <p className="font-black">{stock.name}</p>
+                <p className="mt-1 text-xs font-semibold text-white/50">
+                  {markets.find((market) => market.id === stock.marketId)?.name} · {sectors.find((sector) => sector.id === stock.sectorId)?.name}
+                </p>
               </div>
-              <p className="mt-3 text-sm leading-6 text-slate-600">{stock.description}</p>
+              <span className="rounded-full bg-white/10 px-2 py-1 text-xs font-semibold">波动 {formatPercent(stock.volatility)}</span>
+              <span className="rounded-full bg-blue-400/15 px-2 py-1 text-xs font-semibold text-blue-100">{stock.style === 'growth' ? '成长票' : stock.style === 'cyclical' ? '周期票' : stock.style === 'defensive' ? '防御票' : '龙头票'}</span>
+              <span className="rounded-full bg-gold/20 px-2 py-1 text-xs font-semibold text-gold">{stateLabel}</span>
+              <p className="text-sm leading-6 text-white/70">{stock.description}</p>
             </button>
           )
         })}
@@ -260,16 +318,19 @@ type WeightEditorProps<T extends string> = {
   items: { id: T; name: string }[]
   weights: Record<T, number>
   onChange: (id: T, value: number) => void
+  collapsed?: boolean
 }
 
-function WeightEditor<T extends string>({ title, items, weights, onChange }: WeightEditorProps<T>) {
+function WeightEditor<T extends string>({ title, items, weights, onChange, collapsed = false }: WeightEditorProps<T>) {
   const total = items.reduce((acc, item) => acc + weights[item.id], 0)
   return (
-    <Card>
+    <details className="rounded-3xl bg-white/90 p-6 shadow-soft" open={!collapsed}>
+      <summary className="cursor-pointer list-none">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-lg font-bold">{title}</h3>
         <span className="text-sm text-slate-500">合计 {formatPercent(total)}</span>
       </div>
+      </summary>
       <div className="grid gap-4">
         {items.map((item) => (
           <label key={item.id} className="grid gap-2 sm:grid-cols-[96px_1fr_56px] sm:items-center">
@@ -287,6 +348,51 @@ function WeightEditor<T extends string>({ title, items, weights, onChange }: Wei
           </label>
         ))}
       </div>
-    </Card>
+    </details>
+  )
+}
+
+function equalStockWeights(stockIds: string[]) {
+  if (!stockIds.length) return {}
+  const base = Math.floor((1 / stockIds.length) * 100) / 100
+  const weights = Object.fromEntries(stockIds.map((stockId) => [stockId, base]))
+  const remainder = 1 - Object.values(weights).reduce((total, value) => total + value, 0)
+  weights[stockIds[0]] = Number((weights[stockIds[0]] + remainder).toFixed(2))
+  return weights
+}
+
+function styleLabel(style: Stock['style']) {
+  return style === 'leader' ? '龙头' : style === 'growth' ? '成长' : style === 'cyclical' ? '周期' : style === 'defensive' ? '防御' : '反转'
+}
+
+function Segmented<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string
+  options: { id: T; name: string }[]
+  value: T
+  onChange: (id: T) => void
+}) {
+  return (
+    <div>
+      <p className="text-xs font-black text-slate-500">{label}</p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {options.map((option) => (
+          <button
+            key={option.id}
+            className={`rounded-full px-3 py-2 text-xs font-black transition ${
+              value === option.id ? 'bg-ink text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+            onClick={() => onChange(option.id)}
+            type="button"
+          >
+            {option.name}
+          </button>
+        ))}
+      </div>
+    </div>
   )
 }

@@ -1,7 +1,10 @@
 node_modules/
+.pnpm-store/
 dist/
 .env
 .env.*
 .DS_Store
 .vercel/
+.worktrees/
+.superpowers/
 lark-spark-auth-qrcode.png

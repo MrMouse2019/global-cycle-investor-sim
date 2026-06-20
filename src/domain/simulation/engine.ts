@@ -5,15 +5,20 @@ import { markets } from '../../data/markets/markets'
 import { sectors } from '../../data/sectors/sectors'
 import { endings } from '../../data/endings/endings'
 import { recommendStocks as getRecommendedStocks, stockPool } from '../../data/stocks/stockPool'
+import { eventDecisions } from '../../data/interactions/eventDecisions'
+import { npcMessagePools } from '../../data/interactions/npcMessages'
 import type {
   Allocation,
   Ending,
   EventCard,
+  EventDecision,
+  EventDecisionResult,
   GameState,
   ExitInfo,
   ExitPrompt,
   GameStatistics,
   MarketId,
+  MindsetDebuff,
   PlayerPercentile,
   PlayerHabitFlags,
   PlayerScores,
@@ -35,6 +40,44 @@ const roundMoney = (value: number) => Math.round(value)
 const roundRate = (value: number) => Math.round(value * 10_000) / 10_000
 const sum = (values: number[]) => values.reduce((total, value) => total + value, 0)
 
+const mindsetDebuffs: Record<MindsetDebuff['id'], MindsetDebuff> = {
+  'overconfident-all-in': {
+    id: 'overconfident-all-in',
+    title: '膨胀梭哈',
+    roast: '刚赚点钱就觉得自己读懂了宇宙，市场最爱这种自信。',
+    returnMultiplier: 1,
+    volatilityMultiplier: 1.22,
+  },
+  'numb-after-loss': {
+    id: 'numb-after-loss',
+    title: '躺平麻木',
+    roast: '亏到不想动，连强势赛道敲门都假装没听见。',
+    returnMultiplier: 0.94,
+    volatilityMultiplier: 0.96,
+  },
+  'anxious-chaser': {
+    id: 'anxious-chaser',
+    title: '焦虑追涨',
+    roast: '别人一赚钱你就坐不住，手速比脑子快半拍。',
+    returnMultiplier: 1.04,
+    volatilityMultiplier: 1.18,
+  },
+  'break-even-bagger': {
+    id: 'break-even-bagger',
+    title: '死扛回本',
+    roast: '目标不是赚钱，是把账户数字熬回心理舒适区。',
+    returnMultiplier: 0.98,
+    volatilityMultiplier: 1.1,
+  },
+  'contrarian-influencer': {
+    id: 'contrarian-influencer',
+    title: '反向大V附体',
+    roast: '你开始相信反向指标，问题是你自己也快成指标了。',
+    returnMultiplier: 0.97,
+    volatilityMultiplier: 1.08,
+  },
+}
+
 export function getDisplayYearLabel(game: GameState) {
   return game.totalYears ? `第 ${game.currentYear} / ${game.totalYears} 年` : `第 ${game.currentYear} 年`
 }
@@ -50,6 +93,99 @@ export function getHeavyBlackSwanEventsForYear(year: number): EventCard[] {
   return scenario.eventIds
     .map((eventId) => events.find((event) => event.id === eventId))
     .filter((event): event is EventCard => event?.type === 'black-swan')
+}
+
+function getEventById(eventId: string) {
+  return events.find((event) => event.id === eventId)
+}
+
+export function selectYearDecision(_game: GameState, scenario: YearScenario): EventDecision | undefined {
+  const candidates = eventDecisions.filter((decision) => scenario.eventIds.includes(decision.eventId))
+  if (!candidates.length) return undefined
+
+  const blackSwanDecision = candidates.find((decision) => getEventById(decision.eventId)?.type === 'black-swan')
+  if (blackSwanDecision) return blackSwanDecision
+  if (scenario.year % 2 === 0 || candidates.length > 1) return candidates[0]
+  return undefined
+}
+
+export function resolveEventDecision(decision: EventDecision, optionId?: string): EventDecisionResult {
+  return {
+    decision,
+    option: decision.options.find((option) => option.id === optionId) ?? decision.options[0],
+  }
+}
+
+export function deriveMindsetDebuff(game: GameState): MindsetDebuff | undefined {
+  const last = game.history.at(-1)
+  const previous = game.history.at(-2)
+  if (!last) return undefined
+  if (last.eventDecisionResult?.option.mindsetDebuffId) {
+    return mindsetDebuffs[last.eventDecisionResult.option.mindsetDebuffId]
+  }
+  if (last.annualReturn >= 0.28) return mindsetDebuffs['overconfident-all-in']
+  if (last.annualReturn <= -0.22) return mindsetDebuffs['numb-after-loss']
+  if (previous && previous.annualReturn < 0 && last.annualReturn < 0) return mindsetDebuffs['break-even-bagger']
+  return undefined
+}
+
+export function calculateTradeCost(previous: Allocation | undefined, current: Allocation) {
+  if (!previous) {
+    return {
+      turnover: 0,
+      concentrationPenalty: 0,
+      totalCost: 0,
+      roast: '第一年开户，券商还没来得及收割你的手速。',
+    }
+  }
+
+  const marketTurnover =
+    sum(markets.map((market) => Math.abs((previous.marketWeights[market.id] ?? 0) - (current.marketWeights[market.id] ?? 0)))) / 2
+  const sectorTurnover =
+    sum(sectors.map((sector) => Math.abs((previous.sectorWeights[sector.id] ?? 0) - (current.sectorWeights[sector.id] ?? 0)))) / 2
+  const investedTurnover = Math.abs(previous.investedRatio - current.investedRatio) / 2
+  const retainedStocks = (previous.selectedStocks ?? []).filter((stockId) => current.selectedStocks?.includes(stockId)).length
+  const stockTurnover = Math.max(0, 3 - retainedStocks) / 3
+  const concentration = calculateConcentration(current).concentration
+  const concentrationPenalty = concentration > 0.6 ? (concentration - 0.6) * 0.045 : 0
+  const turnover = roundRate(
+    marketTurnover * 0.018 +
+      sectorTurnover * 0.018 +
+      investedTurnover * 0.014 +
+      stockTurnover * 0.012,
+  )
+  const totalCost = roundRate(clamp(turnover + concentrationPenalty, 0, 0.08))
+
+  return {
+    turnover,
+    concentrationPenalty: roundRate(concentrationPenalty),
+    totalCost,
+    roast: totalCost > 0.025 ? '一年换三次信仰，手续费先把你教育了一遍。' : '这次手没那么痒，交易损耗还算克制。',
+  }
+}
+
+export function buildNpcMessages(_game: GameState, scenario: YearScenario, result?: YearResult) {
+  const hasBlackSwan = scenario.eventIds.some((eventId) => getEventById(eventId)?.type === 'black-swan')
+  const source = result
+    ? result.annualReturn >= 0.08
+      ? npcMessagePools.gain
+      : result.annualReturn <= -0.08
+        ? npcMessagePools.loss
+        : hasBlackSwan
+          ? npcMessagePools.blackSwan
+          : npcMessagePools.idle
+    : hasBlackSwan
+      ? npcMessagePools.blackSwan
+      : npcMessagePools.idle
+  const index = Math.abs(Math.round(Math.sin(scenario.year * 9.17) * 1000)) % source.length
+  return [
+    {
+      id: `npc-${scenario.year}-${result ? 'settlement' : 'briefing'}`,
+      role: 'buddy' as const,
+      tone: hasBlackSwan ? 'warning' as const : result && result.annualReturn >= 0 ? 'celebrating' as const : 'mocking' as const,
+      text: source[index],
+    },
+  ]
 }
 
 function createExitSnapshot(game: GameState, result?: YearResult) {
@@ -224,6 +360,7 @@ function calculateStockReturn(params: {
   allocation: Allocation
   scenario: YearScenario
   appliedEvents: EventCard[]
+  eventDecisionResult?: EventDecisionResult
 }): StockReturnBreakdown {
   const selectedStocks = (params.allocation.selectedStocks ?? [])
     .map((stockId) => stockPool.find((stock) => stock.id === stockId))
@@ -232,33 +369,53 @@ function calculateStockReturn(params: {
   if (params.allocation.investedRatio <= 0 || selectedStocks.length === 0) {
     return {
       selectedStocks: [],
+      entries: [],
       contribution: 0,
       averageReturn: 0,
       averageVolatility: 0,
     }
   }
 
-  const stockReturns = selectedStocks.map((stock) => {
+  const entries = selectedStocks.map((stock) => {
     const marketCycleBonus = params.scenario.preferredMarkets.includes(stock.marketId) ? 0.035 : -0.012
     const sectorCycleBonus = params.scenario.preferredSectors.includes(stock.sectorId) ? 0.045 : 0
     const warningPenalty = params.scenario.warningSectors.includes(stock.sectorId) ? -0.06 : 0
-    const eventImpact = params.appliedEvents.reduce((total, event) => {
+    const eventTags: string[] = []
+    const historicalEventImpact = params.appliedEvents.reduce((total, event) => {
       const affectedMarket = event.affectedMarkets?.includes(stock.marketId)
       const affectedSector = event.affectedSectors?.includes(stock.sectorId)
+      if (affectedMarket || affectedSector) eventTags.push(event.title)
       return total + (affectedMarket || affectedSector ? event.returnImpact * 0.72 : 0)
     }, 0)
-    const stockSpecificShock = deterministicStockShock(stock.id, params.scenario.year) * stock.volatility * 0.45
-    return clamp(
-      stock.expectedReturn + marketCycleBonus + sectorCycleBonus + warningPenalty + eventImpact + stockSpecificShock,
+    const decisionOption = params.eventDecisionResult?.option
+    const decisionAffectsMarket = decisionOption?.affectedMarkets?.includes(stock.marketId)
+    const decisionAffectsSector = decisionOption?.affectedSectors?.includes(stock.sectorId)
+    const decisionImpact = decisionOption && (decisionAffectsMarket || decisionAffectsSector) ? decisionOption.returnModifier * 0.65 : 0
+    if (decisionImpact !== 0 && params.eventDecisionResult) eventTags.push(params.eventDecisionResult.decision.title)
+    const eventImpact = roundRate(historicalEventImpact + decisionImpact)
+    const stockShock = roundRate(deterministicStockShock(stock.id, params.scenario.year) * stock.volatility * 0.45)
+    const annualReturn = roundRate(clamp(
+      stock.expectedReturn + marketCycleBonus + sectorCycleBonus + warningPenalty + eventImpact + stockShock,
       -0.55,
       0.68,
-    )
+    ))
+    return {
+      stock,
+      annualReturn,
+      baseReturn: stock.expectedReturn,
+      marketCycleBonus,
+      sectorCycleBonus: sectorCycleBonus + warningPenalty,
+      eventImpact,
+      stockShock,
+      eventTags,
+    }
   })
 
-  const averageReturn = roundRate(sum(stockReturns) / stockReturns.length)
+  const averageReturn = roundRate(sum(entries.map((entry) => entry.annualReturn)) / entries.length)
   const averageVolatility = roundRate(sum(selectedStocks.map((stock) => stock.volatility)) / selectedStocks.length)
   return {
     selectedStocks,
+    entries,
     averageReturn,
     averageVolatility,
     contribution: roundRate(averageReturn * 0.32),
@@ -391,6 +548,9 @@ export function simulateYear(
     .map((eventId) => events.find((event) => event.id === eventId))
       .filter((event): event is EventCard => Boolean(event)),
   ]
+  const eventDecisionResult = game.pendingDecision
+    ? resolveEventDecision(game.pendingDecision, allocation.eventDecisionOptionId)
+    : undefined
 
   const policyContribution =
     scenario.policy === 'loose' ? 0.018 : scenario.policy === 'tight' ? -0.022 : 0.004
@@ -401,7 +561,21 @@ export function simulateYear(
   const concentration = calculateConcentration(allocation)
   const diversificationAdjustment = concentration.concentration > 0.55 ? -0.028 : 0.012
   const eventContribution = calculateEventContribution(allocation, appliedEvents)
-  const stockResult = calculateStockReturn({ allocation, scenario, appliedEvents })
+  const decisionExposure =
+    eventDecisionResult
+      ? Math.max(
+          eventDecisionResult.option.affectedMarkets?.length
+            ? sum(eventDecisionResult.option.affectedMarkets.map((id) => allocation.marketWeights[id] ?? 0))
+            : 0,
+          eventDecisionResult.option.affectedSectors?.length
+            ? sum(eventDecisionResult.option.affectedSectors.map((id) => allocation.sectorWeights[id] ?? 0))
+            : 0,
+        )
+      : 0
+  const decisionReturnContribution = eventDecisionResult ? eventDecisionResult.option.returnModifier * Math.max(decisionExposure, 0.35) : 0
+  const stockResult = calculateStockReturn({ allocation, scenario, appliedEvents, eventDecisionResult })
+  const tradeCost = calculateTradeCost(game.previousAllocation, allocation)
+  const mindset = game.activeMindset
   const leverageRatio = Math.max(0, allocation.investedRatio - 1)
   const leveragePenalty = leverageRatio * 0.12
   const rawReturn =
@@ -411,11 +585,19 @@ export function simulateYear(
     riskPreferenceContribution +
     diversificationAdjustment +
     eventContribution +
+    decisionReturnContribution +
     stockResult.contribution +
     deterministicLuck(scenario.year)
-  let annualReturn = roundRate(clamp(rawReturn * allocation.investedRatio - leveragePenalty, -1.1, 0.75))
+  let annualReturn = roundRate(
+    clamp(rawReturn * allocation.investedRatio * (mindset?.returnMultiplier ?? 1) - leveragePenalty - tradeCost.totalCost, -1.1, 0.75),
+  )
 
-  const volatility = calculateAverageVolatility(allocation) + calculateEventVolatility(allocation, appliedEvents) + stockResult.averageVolatility * 0.18
+  const volatility =
+    (calculateAverageVolatility(allocation) +
+      calculateEventVolatility(allocation, appliedEvents) +
+      (eventDecisionResult ? eventDecisionResult.option.volatilityModifier * Math.max(decisionExposure, 0.35) : 0) +
+      stockResult.averageVolatility * 0.18) *
+    (mindset?.volatilityMultiplier ?? 1)
   const drawdown = roundRate(
     clamp(
       allocation.investedRatio * (volatility + Math.max(0, -annualReturn) * 0.75) +
@@ -482,6 +664,20 @@ export function simulateYear(
       stockResult,
     }),
     liquidation,
+    eventDecisionResult,
+    mindsetEffect: mindset,
+    tradeCost,
+    rivalSnapshot: {
+      yearlyBeatPercent: 50,
+      topPercent: 50,
+      label: '标准反复被割散户，牛市喝汤熊市深套',
+      roast: '模拟对手还在加载嘲讽词库。',
+    },
+    roastLines: [
+      tradeCost.roast,
+      ...(eventDecisionResult ? [eventDecisionResult.option.roast] : []),
+      ...(mindset ? [mindset.roast] : []),
+    ],
   }
 }
 
@@ -508,6 +704,11 @@ export function applyYearResult(game: GameState, result: YearResult): GameState 
     flags,
     lastResult: result,
     liquidationReason: result.liquidation.reason,
+    previousAllocation: result.allocation,
+    decisionHistory: result.eventDecisionResult
+      ? [...game.decisionHistory, result.eventDecisionResult]
+      : game.decisionHistory,
+    npcMessages: buildNpcMessages(game, result.scenario, result),
   }
 
   const passiveExit = result.liquidation.liquidated

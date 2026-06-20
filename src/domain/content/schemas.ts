@@ -85,6 +85,7 @@ export const allocationSchema = z.object({
   selectedMarketId: marketIdSchema.optional(),
   selectedSectorId: sectorIdSchema.optional(),
   selectedStocks: z.array(z.string()).optional(),
+  stockWeights: z.record(z.string(), z.number().min(0).max(1)).optional(),
 }) as z.ZodType<Allocation>
 
 export const stockSchema = z.object({
@@ -127,5 +128,10 @@ export const gameStateSchema: z.ZodType<GameState> = z.lazy(() =>
     exitInfo: z.any().optional(),
     exitPrompt: z.any().optional(),
     exitPromptDismissedYear: z.number().int().optional(),
+    previousAllocation: z.any().optional(),
+    activeMindset: z.any().optional(),
+    pendingDecision: z.any().optional(),
+    decisionHistory: z.array(z.any()),
+    npcMessages: z.array(z.any()),
   }),
 )
