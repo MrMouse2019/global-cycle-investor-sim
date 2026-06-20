@@ -49,7 +49,7 @@ export type Sector = {
 export type EventCard = {
   id: string
   title: string
-  type: 'macro' | 'region' | 'sector' | 'risk'
+  type: 'macro' | 'region' | 'sector' | 'risk' | 'black-swan'
   description: string
   affectedMarkets?: MarketId[]
   affectedSectors?: SectorId[]
@@ -217,6 +217,15 @@ export type GameStatistics = {
   exitType?: ExitType
   exitTrigger?: ExitTrigger
   exitSnapshot?: ExitAccountSnapshot
+}
+
+export type PlayerPercentile = {
+  topPercent: number
+  percentile: number
+  peerCount: number
+  score: number
+  label: string
+  description: string
 }
 
 export type Ending = {

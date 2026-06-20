@@ -35,12 +35,12 @@ export const sectorSchema = z.object({
 export const eventSchema = z.object({
   id: z.string(),
   title: z.string(),
-  type: z.enum(['macro', 'region', 'sector', 'risk']),
+  type: z.enum(['macro', 'region', 'sector', 'risk', 'black-swan']),
   description: z.string(),
   affectedMarkets: z.array(marketIdSchema).optional(),
   affectedSectors: z.array(sectorIdSchema).optional(),
-  returnImpact: z.number().min(-0.1).max(0.1),
-  volatilityImpact: z.number().min(-0.1).max(0.1),
+  returnImpact: z.number().min(-0.3).max(0.1),
+  volatilityImpact: z.number().min(-0.1).max(0.2),
   reviewText: z.string(),
 }) satisfies z.ZodType<EventCard>
 

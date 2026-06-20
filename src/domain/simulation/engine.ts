@@ -1,5 +1,5 @@
 import { LIQUIDATION_RATIO } from '../../shared/constants/app'
-import { events } from '../../data/events/events'
+import { events, heavyBlackSwanEvents } from '../../data/events/events'
 import { markets } from '../../data/markets/markets'
 import { sectors } from '../../data/sectors/sectors'
 import { endings } from '../../data/endings/endings'
@@ -13,6 +13,7 @@ import type {
   ExitPrompt,
   GameStatistics,
   MarketId,
+  PlayerPercentile,
   PlayerHabitFlags,
   PlayerScores,
   ReviewItem,
@@ -39,6 +40,20 @@ export function getDisplayYearLabel(game: GameState) {
 
 export function recommendStocks(input: StockRecommendationInput) {
   return getRecommendedStocks(input)
+}
+
+export function getHeavyBlackSwanEventsForYear(year: number): EventCard[] {
+  if (year < 3) return []
+
+  let cursor = 3
+  let eventIndex = 0
+  while (cursor <= year && eventIndex < heavyBlackSwanEvents.length) {
+    if (cursor === year) return [heavyBlackSwanEvents[eventIndex]]
+    cursor += 3 + (eventIndex % 3)
+    eventIndex += 1
+  }
+
+  return []
 }
 
 function createExitSnapshot(game: GameState, result?: YearResult) {
@@ -375,9 +390,13 @@ export function simulateYear(
   }
   const marketFit = scoreMarketFit(allocation, scenario)
   const sectorFit = scoreSectorFit(allocation, scenario)
-  const appliedEvents = scenario.eventIds
+  const scheduledBlackSwanEvents = getHeavyBlackSwanEventsForYear(scenario.year)
+  const appliedEvents = [
+    ...scenario.eventIds
     .map((eventId) => events.find((event) => event.id === eventId))
-    .filter((event): event is EventCard => Boolean(event))
+      .filter((event): event is EventCard => Boolean(event)),
+    ...scheduledBlackSwanEvents,
+  ]
 
   const policyContribution =
     scenario.policy === 'loose' ? 0.018 : scenario.policy === 'tight' ? -0.022 : 0.004
@@ -540,6 +559,53 @@ export function calculateStatistics(game: GameState): GameStatistics {
     exitType: game.exitInfo?.type,
     exitTrigger: game.exitInfo?.trigger,
     exitSnapshot: game.exitInfo?.snapshot,
+  }
+}
+
+function simulatedPeerScore(index: number) {
+  const cycle = Math.sin(index * 12.9898) * 43758.5453
+  const volatility = Math.sin((index + 17) * 78.233) * 19341.17
+  const normalizedCycle = cycle - Math.floor(cycle)
+  const normalizedVolatility = volatility - Math.floor(volatility)
+  return -0.58 + normalizedCycle * 1.72 - normalizedVolatility * 0.34
+}
+
+export function calculatePlayerPercentile(game: GameState): PlayerPercentile {
+  const peerCount = 10_000
+  const totalReturn = (game.totalAssets - game.initialCapital) / game.initialCapital
+  const completedYears = Math.max(1, game.history.length || game.currentYear - 1)
+  const annualizedReturn = (game.totalAssets / game.initialCapital) ** (1 / completedYears) - 1
+  const score = roundRate(totalReturn * 0.72 + annualizedReturn * 1.6 - game.maxDrawdown * 0.28)
+  let beatenPeers = 0
+
+  for (let index = 0; index < peerCount; index += 1) {
+    if (score >= simulatedPeerScore(index)) beatenPeers += 1
+  }
+
+  const percentile = clamp(Math.round((beatenPeers / peerCount) * 100), 1, 99)
+  const topPercent = clamp(100 - percentile + 1, 1, 100)
+  const label =
+    topPercent <= 5
+      ? '顶尖梯队'
+      : topPercent <= 20
+        ? '领先玩家'
+        : topPercent <= 50
+          ? '中上水平'
+          : '仍在追赶'
+  const description =
+    topPercent <= 20
+      ? '你的账户收益和回撤控制已经跑赢多数模拟玩家。'
+      : topPercent <= 50
+        ? '你的表现接近全服中位以上，继续优化周期和仓位匹配。'
+        : '当前收益分位偏后，优先降低黑天鹅年份的集中暴露。'
+
+  return {
+    topPercent,
+    percentile,
+    peerCount,
+    score,
+    label,
+    description,
   }
 }
 
