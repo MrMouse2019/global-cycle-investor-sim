@@ -5,9 +5,11 @@ import { stockPool } from '../../src/data/stocks/stockPool'
 import { allocationTemplates } from '../../src/domain/simulation/allocationTemplates'
 import {
   applyYearResult,
+  calculatePlayerPercentile,
   calculateStatistics,
   createActiveExitInfo,
   getDisplayYearLabel,
+  getHeavyBlackSwanEventsForYear,
   recommendStocks,
   scoreMarketFit,
   scoreSectorFit,
@@ -107,6 +109,31 @@ describe('simulation engine', () => {
     expect(withStocks.annualReturn).not.toBe(withoutStocks.annualReturn)
   })
 
+  it('schedules heavyweight black swan events every three to five years without repetition', () => {
+    const triggeredYears = Array.from({ length: 16 }, (_, index) => index + 1).filter(
+      (year) => getHeavyBlackSwanEventsForYear(year).length > 0,
+    )
+    const gaps = triggeredYears.slice(1).map((year, index) => year - triggeredYears[index])
+    const triggeredIds = triggeredYears.flatMap((year) => getHeavyBlackSwanEventsForYear(year).map((event) => event.id))
+
+    expect(triggeredYears[0]).toBeGreaterThanOrEqual(3)
+    expect(gaps.every((gap) => gap >= 3 && gap <= 5)).toBe(true)
+    expect(new Set(triggeredIds).size).toBe(triggeredIds.length)
+    expect(getHeavyBlackSwanEventsForYear(3).every((event) => event.returnImpact <= -0.1)).toBe(true)
+  })
+
+  it('heavyweight black swans materially suppress exposed asset returns and raise volatility', () => {
+    const scenario = { ...scenarios[2], year: 3, eventIds: [] }
+    const game = createInitialGame()
+    const baseline = simulateYear(game, { ...scenario, year: 2 }, badConcentrated)
+    const shocked = simulateYear(game, scenario, badConcentrated)
+
+    expect(shocked.appliedEvents.some((event) => event.type === 'black-swan')).toBe(true)
+    expect(shocked.annualReturn).toBeLessThanOrEqual(baseline.annualReturn - 0.06)
+    expect(shocked.drawdown).toBeGreaterThan(baseline.drawdown)
+    expect(shocked.reviewItems.some((item) => item.title.includes('黑天鹅'))).toBe(true)
+  })
+
   it('rewards defensive positioning in recession more than concentrated growth', () => {
     const recession = scenarios.find((scenario) => scenario.macroCycle === 'recession')!
     const game = createInitialGame()
@@ -137,6 +164,17 @@ describe('simulation engine', () => {
     expect(stats.completedYears).toBe(2)
     expect(stats.totalProfitLoss).toBe(stats.finalAssets - stats.initialCapital)
     expect(stats.bestYearReturn).toBeGreaterThanOrEqual(stats.worstYearReturn)
+  })
+
+  it('calculates full-server percentile ranking from current account performance', () => {
+    const averagePlayer = createInitialGame()
+    const strongPlayer = { ...createInitialGame(), currentYear: 8, totalAssets: 1_850_000, maxDrawdown: 0.18 }
+    const weakPlayer = { ...createInitialGame(), currentYear: 8, totalAssets: 620_000, maxDrawdown: 0.62 }
+
+    expect(calculatePlayerPercentile(averagePlayer).topPercent).toBeGreaterThan(0)
+    expect(calculatePlayerPercentile(averagePlayer).topPercent).toBeLessThanOrEqual(100)
+    expect(calculatePlayerPercentile(strongPlayer).topPercent).toBeLessThan(calculatePlayerPercentile(averagePlayer).topPercent)
+    expect(calculatePlayerPercentile(weakPlayer).topPercent).toBeGreaterThan(calculatePlayerPercentile(averagePlayer).topPercent)
   })
 
   it('supports at least 10 endings', () => {

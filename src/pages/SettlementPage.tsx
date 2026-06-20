@@ -1,3 +1,4 @@
+import { calculatePlayerPercentile } from '../domain/simulation/engine'
 import { useGameStore } from '../features/campaign-flow/gameStore'
 import { DISCLAIMER } from '../shared/constants/app'
 import { formatMoney, formatPercent } from '../shared/lib/format'
@@ -18,6 +19,11 @@ export function SettlementPage() {
       : prompt?.trigger === 'drawdown'
         ? '账户回撤超过 50%，玩家选择主动止损退出。'
         : '玩家选择主动退出投资。'
+  const ranking = calculatePlayerPercentile({
+    ...game,
+    totalAssets: result.endAssets,
+    maxDrawdown: Math.max(game.maxDrawdown, result.drawdown),
+  })
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
@@ -63,10 +69,10 @@ export function SettlementPage() {
               <Stat label="账户资产" value={formatMoney(prompt.snapshot.totalAssets)} />
             </div>
             <div className="mt-5 flex flex-wrap gap-3">
-              <Button onClick={() => endInvestment(endReason, prompt.trigger === 'profit' ? 'take-profit' : 'stop-loss')} variant="danger">
+              <Button onClick={continueInvestment}>继续投资</Button>
+              <Button onClick={() => endInvestment(endReason, prompt.trigger === 'profit' ? 'take-profit' : 'stop-loss')} variant="quiet">
                 结束投资
               </Button>
-              <Button onClick={continueInvestment} variant="secondary">继续投资</Button>
             </div>
           </div>
         ) : null}
@@ -77,13 +83,13 @@ export function SettlementPage() {
             <>
               <Button
                 onClick={() => endInvestment('玩家选择主动止盈退出。', 'take-profit')}
-                variant="secondary"
+                variant="quiet"
               >
                 赚够了，止盈退出
               </Button>
               <Button
                 onClick={() => endInvestment('玩家选择主动止损退出。', 'stop-loss')}
-                variant="secondary"
+                variant="quiet"
               >
                 亏够了，止损退出
               </Button>
@@ -102,10 +108,30 @@ export function SettlementPage() {
           </div>
         </Card>
         <Card>
+          <h3 className="text-lg font-bold">全服收益排名</h3>
+          <div className="mt-4 rounded-2xl bg-ink p-4 text-white">
+            <p className="text-sm text-white/70">当前账户处于全体玩家</p>
+            <p className="mt-1 text-3xl font-black">前 {ranking.topPercent}%</p>
+            <p className="mt-2 text-sm font-semibold text-gold">{ranking.label}</p>
+          </div>
+          <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-100">
+            <div className="h-full rounded-full bg-gold" style={{ width: `${ranking.percentile}%` }} />
+          </div>
+          <p className="mt-3 text-sm leading-6 text-slate-600">{ranking.description}</p>
+          <p className="mt-2 text-xs text-slate-500">
+            基于 {ranking.peerCount.toLocaleString('zh-CN')} 名模拟玩家收益、年化表现与回撤控制生成动态分位。
+          </p>
+        </Card>
+        <Card>
           <h3 className="text-lg font-bold">年度事件</h3>
           <div className="mt-3 space-y-3">
             {result.appliedEvents.map((event) => (
-              <div key={event.id} className="rounded-2xl bg-slate-50 p-3">
+              <div
+                key={event.id}
+                className={`rounded-2xl p-3 ${
+                  event.type === 'black-swan' ? 'bg-red-50 text-red-900' : 'bg-slate-50'
+                }`}
+              >
                 <p className="font-semibold">{event.title}</p>
                 <p className="mt-1 text-sm text-slate-600">{event.description}</p>
               </div>
