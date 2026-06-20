@@ -84,7 +84,7 @@ describe('simulation engine', () => {
 
     expect(recommendations).toHaveLength(6)
     expect(recommendations.slice(0, 3).map((stock) => stock.name)).toEqual(
-      expect.arrayContaining(['英伟达', '苹果', '微软']),
+      expect.arrayContaining(['英伟大', '苹国', '微硬']),
     )
     expect(recommendations.every((stock) => stock.marketId === 'us' || stock.sectorId === 'technology')).toBe(true)
   })

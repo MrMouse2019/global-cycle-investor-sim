@@ -34,4 +34,20 @@ describe('content schemas', () => {
       expect(Object.keys(scenario?.marketPerformance ?? {})).toHaveLength(6)
     })
   })
+
+  it('uses desensitized visible stock names', () => {
+    const forbidden = ['英伟达', '苹果', '微软', '谷歌', '特斯拉', '台积电', '三星电子', '腾讯控股', '贵州茅台']
+    const visible = stockPool.map((stock) => `${stock.name} ${stock.description}`).join('\n')
+
+    forbidden.forEach((name) => {
+      expect(visible).not.toContain(name)
+    })
+  })
+
+  it('keeps annual summaries compact and supports historical detail separately', () => {
+    scenarios.forEach((scenario) => {
+      expect(scenario.summary.length).toBeLessThanOrEqual(90)
+      expect(scenario.macroMainline.length).toBeGreaterThan(12)
+    })
+  })
 })
