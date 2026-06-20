@@ -4,5 +4,6 @@ dist/
 .env.*
 .DS_Store
 .vercel/
+.worktrees/
 .superpowers/
 lark-spark-auth-qrcode.png
