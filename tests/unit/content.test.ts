@@ -14,4 +14,24 @@ describe('content schemas', () => {
     expect(events.map((event) => eventSchema.parse(event)).length).toBeGreaterThanOrEqual(4)
     expect(scenarios.map((scenario) => yearScenarioSchema.parse(scenario))).toHaveLength(20)
   })
+
+  it('uses a strict 2005-2024 historical campaign timeline with teaching context', () => {
+    expect(scenarios.map((scenario) => scenario.historicalYear)).toEqual(
+      Array.from({ length: 20 }, (_, index) => 2005 + index),
+    )
+
+    const requiredYears = [2008, 2015, 2019, 2020, 2022, 2023, 2024]
+    requiredYears.forEach((year) => {
+      const scenario = scenarios.find((item) => item.historicalYear === year)
+      expect(scenario, `missing historical year ${year}`).toBeTruthy()
+      expect(scenario?.macroMainline.length).toBeGreaterThan(6)
+      expect(scenario?.leadingThemes.length).toBeGreaterThanOrEqual(1)
+      expect(scenario?.laggingThemes.length).toBeGreaterThanOrEqual(1)
+      expect(scenario?.marketCharacteristics.length).toBeGreaterThan(6)
+      expect(scenario?.plainLanguage.length).toBeGreaterThan(12)
+      expect(scenario?.monetaryPolicyDetail.length).toBeGreaterThan(6)
+      expect(scenario?.supplyDemandDetail.length).toBeGreaterThan(6)
+      expect(Object.keys(scenario?.marketPerformance ?? {})).toHaveLength(6)
+    })
+  })
 })

@@ -60,6 +60,7 @@ export type EventCard = {
 
 export type YearScenario = {
   year: number
+  historicalYear: number
   title: string
   macroCycle: MacroCycle
   cycleLabel: string
@@ -69,6 +70,14 @@ export type YearScenario = {
   preferredSectors: SectorId[]
   warningSectors: SectorId[]
   eventIds: string[]
+  macroMainline: string
+  leadingThemes: string[]
+  laggingThemes: string[]
+  marketCharacteristics: string
+  plainLanguage: string
+  monetaryPolicyDetail: string
+  supplyDemandDetail: string
+  marketPerformance: Partial<Record<MarketId, string>>
   teachingHint: string
   summary: string
 }

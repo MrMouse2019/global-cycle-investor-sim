@@ -1,5 +1,6 @@
 import { LIQUIDATION_RATIO } from '../../shared/constants/app'
-import { events, heavyBlackSwanEvents } from '../../data/events/events'
+import { events } from '../../data/events/events'
+import { scenarios } from '../../data/cycles/scenarios'
 import { markets } from '../../data/markets/markets'
 import { sectors } from '../../data/sectors/sectors'
 import { endings } from '../../data/endings/endings'
@@ -43,17 +44,12 @@ export function recommendStocks(input: StockRecommendationInput) {
 }
 
 export function getHeavyBlackSwanEventsForYear(year: number): EventCard[] {
-  if (year < 3) return []
+  const scenario = scenarios[year - 1]
+  if (!scenario) return []
 
-  let cursor = 3
-  let eventIndex = 0
-  while (cursor <= year && eventIndex < heavyBlackSwanEvents.length) {
-    if (cursor === year) return [heavyBlackSwanEvents[eventIndex]]
-    cursor += 3 + (eventIndex % 3)
-    eventIndex += 1
-  }
-
-  return []
+  return scenario.eventIds
+    .map((eventId) => events.find((event) => event.id === eventId))
+    .filter((event): event is EventCard => event?.type === 'black-swan')
 }
 
 function createExitSnapshot(game: GameState, result?: YearResult) {
@@ -390,12 +386,10 @@ export function simulateYear(
   }
   const marketFit = scoreMarketFit(allocation, scenario)
   const sectorFit = scoreSectorFit(allocation, scenario)
-  const scheduledBlackSwanEvents = getHeavyBlackSwanEventsForYear(scenario.year)
   const appliedEvents = [
     ...scenario.eventIds
     .map((eventId) => events.find((event) => event.id === eventId))
       .filter((event): event is EventCard => Boolean(event)),
-    ...scheduledBlackSwanEvents,
   ]
 
   const policyContribution =

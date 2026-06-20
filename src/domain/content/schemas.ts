@@ -14,6 +14,15 @@ const sectorIdSchema = z.enum([
   'agriculture',
 ])
 
+const marketPerformanceSchema = z.object({
+  'a-share': z.string().optional(),
+  'h-share': z.string().optional(),
+  us: z.string().optional(),
+  japan: z.string().optional(),
+  taiwan: z.string().optional(),
+  korea: z.string().optional(),
+})
+
 export const marketSchema = z.object({
   id: marketIdSchema,
   name: z.string(),
@@ -46,6 +55,7 @@ export const eventSchema = z.object({
 
 export const yearScenarioSchema = z.object({
   year: z.number().int().min(1),
+  historicalYear: z.number().int().min(1900).max(2100),
   title: z.string(),
   macroCycle: macroCycleSchema,
   cycleLabel: z.string(),
@@ -55,6 +65,14 @@ export const yearScenarioSchema = z.object({
   preferredSectors: z.array(sectorIdSchema),
   warningSectors: z.array(sectorIdSchema),
   eventIds: z.array(z.string()),
+  macroMainline: z.string(),
+  leadingThemes: z.array(z.string()),
+  laggingThemes: z.array(z.string()),
+  marketCharacteristics: z.string(),
+  plainLanguage: z.string(),
+  monetaryPolicyDetail: z.string(),
+  supplyDemandDetail: z.string(),
+  marketPerformance: marketPerformanceSchema,
   teachingHint: z.string(),
   summary: z.string(),
 }) satisfies z.ZodType<YearScenario>
