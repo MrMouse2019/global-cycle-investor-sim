@@ -3,6 +3,7 @@ import { scenarios } from '../../src/data/cycles/scenarios'
 import { eventDecisions } from '../../src/data/interactions/eventDecisions'
 import { allocationTemplates } from '../../src/domain/simulation/allocationTemplates'
 import {
+  applyYearResult,
   calculateTradeCost,
   deriveMindsetDebuff,
   resolveEventDecision,
@@ -50,5 +51,21 @@ describe('interaction fixtures', () => {
     const changed = calculateTradeCost(allocationTemplates.steady, allocationTemplates.growth)
 
     expect(same.totalCost).toBeLessThan(changed.totalCost)
+  })
+
+  it('stores previous allocation and event decisions after applying a result', () => {
+    const scenario = scenarios.find((item) => item.historicalYear === 2014)!
+    const pendingDecision = selectYearDecision(createInitialGame(), scenario)
+    const game = { ...createInitialGame(), pendingDecision }
+    const result = simulateYear(game, scenario, {
+      ...allocationTemplates.growth,
+      selectedStocks: ['a-share-technology-foxconn', 'a-share-technology-zte', 'a-share-technology-iflytek'],
+      eventDecisionOptionId: pendingDecision?.options[0].id,
+    })
+    const nextGame = applyYearResult(game, result)
+
+    expect(nextGame.previousAllocation).toEqual(result.allocation)
+    expect(nextGame.decisionHistory).toHaveLength(1)
+    expect(nextGame.npcMessages.length).toBeGreaterThan(0)
   })
 })

@@ -6,6 +6,7 @@ import { sectors } from '../../data/sectors/sectors'
 import { endings } from '../../data/endings/endings'
 import { recommendStocks as getRecommendedStocks, stockPool } from '../../data/stocks/stockPool'
 import { eventDecisions } from '../../data/interactions/eventDecisions'
+import { npcMessagePools } from '../../data/interactions/npcMessages'
 import type {
   Allocation,
   Ending,
@@ -161,6 +162,30 @@ export function calculateTradeCost(previous: Allocation | undefined, current: Al
     totalCost,
     roast: totalCost > 0.025 ? '一年换三次信仰，手续费先把你教育了一遍。' : '这次手没那么痒，交易损耗还算克制。',
   }
+}
+
+export function buildNpcMessages(_game: GameState, scenario: YearScenario, result?: YearResult) {
+  const hasBlackSwan = scenario.eventIds.some((eventId) => getEventById(eventId)?.type === 'black-swan')
+  const source = result
+    ? result.annualReturn >= 0.08
+      ? npcMessagePools.gain
+      : result.annualReturn <= -0.08
+        ? npcMessagePools.loss
+        : hasBlackSwan
+          ? npcMessagePools.blackSwan
+          : npcMessagePools.idle
+    : hasBlackSwan
+      ? npcMessagePools.blackSwan
+      : npcMessagePools.idle
+  const index = Math.abs(Math.round(Math.sin(scenario.year * 9.17) * 1000)) % source.length
+  return [
+    {
+      id: `npc-${scenario.year}-${result ? 'settlement' : 'briefing'}`,
+      role: 'buddy' as const,
+      tone: hasBlackSwan ? 'warning' as const : result && result.annualReturn >= 0 ? 'celebrating' as const : 'mocking' as const,
+      text: source[index],
+    },
+  ]
 }
 
 function createExitSnapshot(game: GameState, result?: YearResult) {
@@ -679,6 +704,11 @@ export function applyYearResult(game: GameState, result: YearResult): GameState 
     flags,
     lastResult: result,
     liquidationReason: result.liquidation.reason,
+    previousAllocation: result.allocation,
+    decisionHistory: result.eventDecisionResult
+      ? [...game.decisionHistory, result.eventDecisionResult]
+      : game.decisionHistory,
+    npcMessages: buildNpcMessages(game, result.scenario, result),
   }
 
   const passiveExit = result.liquidation.liquidated

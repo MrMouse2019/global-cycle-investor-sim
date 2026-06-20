@@ -2,7 +2,14 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { scenarios } from '../../data/cycles/scenarios'
 import { allocationTemplates } from '../../domain/simulation/allocationTemplates'
-import { applyYearResult, createActiveExitInfo, simulateYear } from '../../domain/simulation/engine'
+import {
+  applyYearResult,
+  buildNpcMessages,
+  createActiveExitInfo,
+  deriveMindsetDebuff,
+  selectYearDecision,
+  simulateYear,
+} from '../../domain/simulation/engine'
 import type { Allocation, ExitTrigger, GameState, YearScenario } from '../../domain/types/game'
 import { INITIAL_CAPITAL, SAVE_KEY } from '../../shared/constants/app'
 
@@ -53,16 +60,26 @@ export function getCurrentScenario(game: GameState): YearScenario {
   }
 }
 
+function prepareYearInteractions(game: GameState): GameState {
+  const scenario = getCurrentScenario(game)
+  return {
+    ...game,
+    activeMindset: deriveMindsetDebuff(game),
+    pendingDecision: selectYearDecision(game, scenario),
+    npcMessages: buildNpcMessages(game, scenario),
+  }
+}
+
 export const useGameStore = create<GameStore>()(
   persist(
     (set, get) => ({
       game: createInitialGame(),
       startGame: (totalYears = null) =>
         set({
-          game: {
+          game: prepareYearInteractions({
             ...createInitialGame({ totalYears }),
             status: 'briefing',
-          },
+          }),
         }),
       resetGame: () => set({ game: createInitialGame() }),
       goToAllocation: () =>
@@ -84,14 +101,15 @@ export const useGameStore = create<GameStore>()(
           if ((game.totalYears !== null && game.currentYear >= game.totalYears) || game.exitInfo || game.liquidationReason) {
             return { game: { ...game, status: 'ending' } }
           }
-          return {
-            game: {
+          const nextGame = {
               ...game,
               currentYear: game.currentYear + 1,
-              status: 'briefing',
+              status: 'briefing' as const,
               lastResult: undefined,
               exitPrompt: undefined,
-            },
+          }
+          return {
+            game: prepareYearInteractions(nextGame),
           }
         }),
       endInvestment: (reason, trigger = 'manual') =>
