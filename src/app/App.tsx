@@ -62,6 +62,8 @@ function HomePage({ startGame, hasSave }: { startGame: (totalYears?: number | nu
     scores: { marketCognition: 50, sectorSensitivity: 50, riskControl: 70 },
     history: [],
     flags: { allInYears: 0, concentratedYears: 0, cashHeavyYears: 0, inverseCycleYears: 0, highRiskEventExposureYears: 0 },
+    decisionHistory: [],
+    npcMessages: [],
   })
 
   return (

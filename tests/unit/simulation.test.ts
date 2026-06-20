@@ -84,7 +84,7 @@ describe('simulation engine', () => {
 
     expect(recommendations).toHaveLength(6)
     expect(recommendations.slice(0, 3).map((stock) => stock.name)).toEqual(
-      expect.arrayContaining(['英伟达', '苹果', '微软']),
+      expect.arrayContaining(['英伟大', '苹国', '微硬']),
     )
     expect(recommendations.every((stock) => stock.marketId === 'us' || stock.sectorId === 'technology')).toBe(true)
   })
@@ -107,6 +107,28 @@ describe('simulation engine', () => {
     expect(withStocks.stockResult.selectedStocks).toHaveLength(3)
     expect(withStocks.stockResult.contribution).not.toBe(0)
     expect(withStocks.annualReturn).not.toBe(withoutStocks.annualReturn)
+  })
+
+  it('explains selected stock returns with per-stock event impact entries', () => {
+    const scenario = scenarios.find((item) => item.historicalYear === 2014)!
+    const recommendations = recommendStocks({
+      year: scenario.year,
+      marketId: 'a-share',
+      sectorId: 'technology',
+      scenario,
+    })
+    const allocation = {
+      ...allocationTemplates.growth,
+      selectedMarketId: 'a-share' as const,
+      selectedSectorId: 'technology' as const,
+      selectedStocks: recommendations.slice(0, 3).map((stock) => stock.id),
+    }
+    const result = simulateYear(createInitialGame(), scenario, allocation)
+
+    expect(result.stockResult.entries).toHaveLength(3)
+    expect(result.stockResult.entries.some((entry) => entry.eventImpact !== 0)).toBe(true)
+    expect(result.stockResult.entries[0]).toHaveProperty('marketCycleBonus')
+    expect(result.stockResult.entries[0]).toHaveProperty('stockShock')
   })
 
   it('schedules heavyweight black swan events every three to five years without repetition', () => {
