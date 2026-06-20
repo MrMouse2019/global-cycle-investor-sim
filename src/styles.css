@@ -32,3 +32,36 @@ select:focus-visible {
   outline: 3px solid rgba(200, 143, 61, 0.55);
   outline-offset: 2px;
 }
+
+.market-pulse {
+  animation: market-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes market-pulse {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.92;
+  }
+  50% {
+    transform: translateY(-1px);
+    opacity: 1;
+  }
+}
+
+.stock-board-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1.2fr) repeat(3, minmax(72px, auto)) minmax(120px, 1fr);
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.mobile-episode {
+  scroll-snap-type: y proximity;
+}
+
+@media (max-width: 760px) {
+  .stock-board-row {
+    grid-template-columns: 1fr;
+  }
+}

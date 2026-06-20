@@ -18,30 +18,43 @@ export function AnnualBriefPage() {
   }))
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-      <Card>
+    <div className="grid gap-6">
+      <CockpitTabs active="brief" />
+      <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+      <Card className="mobile-episode">
         <p className="text-sm font-semibold text-gold">{getDisplayYearLabel(game)}</p>
         <h2 className="mt-2 text-3xl font-black">{scenario.title}</h2>
         <p className="mt-2 text-sm font-semibold text-slate-500">真实历史年份：{scenario.historicalYear}</p>
-        <p className="mt-4 text-slate-600">{scenario.summary}</p>
+        {game.npcMessages[0] ? (
+          <div className="mt-4 rounded-2xl bg-ink p-4 text-sm font-semibold leading-6 text-white">
+            {game.npcMessages[0].text}
+          </div>
+        ) : null}
+        <p className="mt-4 rounded-2xl bg-gold/10 p-4 text-sm font-semibold leading-6 text-slate-800">{scenario.summary}</p>
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
           <Info label="宏观周期" value={scenario.cycleLabel} />
           <Info label="货币政策" value={scenario.policy === 'loose' ? '宽松' : scenario.policy === 'tight' ? '紧缩' : '中性'} />
           <Info label="风险偏好" value={scenario.riskPreference === 'high' ? '高' : scenario.riskPreference === 'low' ? '低' : '中'} />
         </div>
-        <div className="mt-6 grid gap-3">
-          <TextBlock label="宏观主线" value={scenario.macroMainline} />
-          <TextBlock label="货币政策" value={scenario.monetaryPolicyDetail} />
-          <TextBlock label="全球供需关系" value={scenario.supplyDemandDetail} />
-          <TextBlock label="市场核心特征" value={scenario.marketCharacteristics} />
+        {game.pendingDecision ? (
+          <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm leading-6 text-red-950">
+            <p className="font-black">{game.pendingDecision.title}</p>
+            <p className="mt-1">{game.pendingDecision.prompt}</p>
+          </div>
+        ) : null}
+        <details className="mt-6 rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-700">
+          <summary className="cursor-pointer font-black text-slate-900">展开完整历史背景</summary>
+          <div className="mt-4 grid gap-3">
+            <TextBlock label="宏观主线" value={scenario.macroMainline} />
+            <TextBlock label="货币政策" value={scenario.monetaryPolicyDetail} />
+            <TextBlock label="全球供需关系" value={scenario.supplyDemandDetail} />
+            <TextBlock label="市场核心特征" value={scenario.marketCharacteristics} />
+            <TextBlock label="隐含逻辑" value={scenario.plainLanguage} />
+          </div>
+        </details>
+        <div className="mt-6">
+          <Button onClick={goToAllocation} variant="primary">进入资产配置</Button>
         </div>
-        <div className="mt-6 rounded-2xl bg-gold/10 p-4 text-sm leading-6 text-slate-700">
-          <strong>年度提示：</strong>{scenario.teachingHint}
-        </div>
-        <div className="mt-4 rounded-2xl bg-blue-50 p-4 text-sm leading-6 text-blue-900">
-          <strong>新手科普：</strong>{scenario.plainLanguage}
-        </div>
-        <Button onClick={goToAllocation} variant="primary">进入资产配置</Button>
       </Card>
 
       <div className="grid gap-4">
@@ -94,7 +107,31 @@ export function AnnualBriefPage() {
           </div>
         </Card>
       </div>
+      </div>
     </div>
+  )
+}
+
+function CockpitTabs({ active }: { active: 'brief' | 'allocation' | 'settlement' }) {
+  const tabs = [
+    ['brief', '年度行情速览'],
+    ['allocation', '一键资产配置'],
+    ['settlement', '年度结算 & 复盘'],
+  ] as const
+
+  return (
+    <nav className="grid gap-2 rounded-2xl bg-white/80 p-2 shadow-sm sm:grid-cols-3" aria-label="年度驾驶舱">
+      {tabs.map(([id, label]) => (
+        <div
+          key={id}
+          className={`rounded-xl px-4 py-3 text-center text-sm font-black ${
+            active === id ? 'bg-ink text-white' : 'bg-slate-50 text-slate-500'
+          }`}
+        >
+          {label}
+        </div>
+      ))}
+    </nav>
   )
 }
 
