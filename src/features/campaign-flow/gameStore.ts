@@ -41,6 +41,8 @@ export function createInitialGame(options: { totalYears?: number | null } = {}):
       inverseCycleYears: 0,
       highRiskEventExposureYears: 0,
     },
+    decisionHistory: [],
+    npcMessages: [],
   }
 }
 

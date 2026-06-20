@@ -232,6 +232,7 @@ function calculateStockReturn(params: {
   if (params.allocation.investedRatio <= 0 || selectedStocks.length === 0) {
     return {
       selectedStocks: [],
+      entries: [],
       contribution: 0,
       averageReturn: 0,
       averageVolatility: 0,
@@ -259,6 +260,7 @@ function calculateStockReturn(params: {
   const averageVolatility = roundRate(sum(selectedStocks.map((stock) => stock.volatility)) / selectedStocks.length)
   return {
     selectedStocks,
+    entries: [],
     averageReturn,
     averageVolatility,
     contribution: roundRate(averageReturn * 0.32),
@@ -482,6 +484,19 @@ export function simulateYear(
       stockResult,
     }),
     liquidation,
+    tradeCost: {
+      turnover: 0,
+      concentrationPenalty: 0,
+      totalCost: 0,
+      roast: '本年交易损耗尚未单独计算。',
+    },
+    rivalSnapshot: {
+      yearlyBeatPercent: 50,
+      topPercent: 50,
+      label: '标准反复被割散户，牛市喝汤熊市深套',
+      roast: '模拟对手还在加载嘲讽词库。',
+    },
+    roastLines: [],
   }
 }
 

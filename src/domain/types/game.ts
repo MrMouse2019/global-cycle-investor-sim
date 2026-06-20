@@ -102,6 +102,78 @@ export type Stock = {
   description: string
 }
 
+export type MindsetDebuffId =
+  | 'overconfident-all-in'
+  | 'numb-after-loss'
+  | 'anxious-chaser'
+  | 'break-even-bagger'
+  | 'contrarian-influencer'
+
+export type MindsetDebuff = {
+  id: MindsetDebuffId
+  title: string
+  roast: string
+  returnMultiplier: number
+  volatilityMultiplier: number
+}
+
+export type EventDecisionOption = {
+  id: string
+  label: string
+  roast: string
+  returnModifier: number
+  volatilityModifier: number
+  affectedMarkets?: MarketId[]
+  affectedSectors?: SectorId[]
+  mindsetDebuffId?: MindsetDebuffId
+  riskAppetiteShift?: number
+}
+
+export type EventDecision = {
+  id: string
+  eventId: string
+  title: string
+  prompt: string
+  options: EventDecisionOption[]
+}
+
+export type EventDecisionResult = {
+  decision: EventDecision
+  option: EventDecisionOption
+}
+
+export type NpcMessage = {
+  id: string
+  role: 'buddy' | 'influencer' | 'rival'
+  tone: 'bullish' | 'bearish' | 'mocking' | 'warning' | 'celebrating'
+  text: string
+}
+
+export type RivalSnapshot = {
+  yearlyBeatPercent: number
+  topPercent: number
+  label: string
+  roast: string
+}
+
+export type TradeCostBreakdown = {
+  turnover: number
+  concentrationPenalty: number
+  totalCost: number
+  roast: string
+}
+
+export type StockReturnEntry = {
+  stock: Stock
+  annualReturn: number
+  baseReturn: number
+  marketCycleBonus: number
+  sectorCycleBonus: number
+  eventImpact: number
+  stockShock: number
+  eventTags: string[]
+}
+
 export type StockRecommendationInput = {
   year: number
   marketId: MarketId
@@ -111,6 +183,7 @@ export type StockRecommendationInput = {
 
 export type StockReturnBreakdown = {
   selectedStocks: Stock[]
+  entries: StockReturnEntry[]
   contribution: number
   averageReturn: number
   averageVolatility: number
@@ -124,6 +197,8 @@ export type Allocation = {
   selectedMarketId?: MarketId
   selectedSectorId?: SectorId
   selectedStocks?: string[]
+  eventDecisionOptionId?: string
+  followedNpcSignal?: boolean
 }
 
 export type ReviewItem = {
@@ -184,6 +259,11 @@ export type YearResult = {
   appliedEvents: EventCard[]
   reviewItems: ReviewItem[]
   liquidation: LiquidationCheck
+  eventDecisionResult?: EventDecisionResult
+  mindsetEffect?: MindsetDebuff
+  tradeCost: TradeCostBreakdown
+  rivalSnapshot: RivalSnapshot
+  roastLines: string[]
 }
 
 export type GameStatus = 'idle' | 'briefing' | 'allocating' | 'settling' | 'reviewing' | 'ending'
@@ -205,6 +285,11 @@ export type GameState = {
   exitInfo?: ExitInfo
   exitPrompt?: ExitPrompt
   exitPromptDismissedYear?: number
+  previousAllocation?: Allocation
+  activeMindset?: MindsetDebuff
+  pendingDecision?: EventDecision
+  decisionHistory: EventDecisionResult[]
+  npcMessages: NpcMessage[]
 }
 
 export type GameStatistics = {
