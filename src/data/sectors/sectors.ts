@@ -1,0 +1,68 @@
+import type { Sector } from '../../domain/types/game'
+
+export const sectors: Sector[] = [
+  {
+    id: 'consumer',
+    name: '消费',
+    traits: ['防御性', '现金流稳定', '衰退抗跌'],
+    strongCycles: ['recovery', 'stagflation', 'recession'],
+    weakCycles: ['tight'],
+    volatility: 0.1,
+  },
+  {
+    id: 'technology',
+    name: '科技',
+    traits: ['成长核心', '估值弹性', '宽松敏感'],
+    strongCycles: ['recovery', 'loose', 'overheat'],
+    weakCycles: ['tight', 'recession'],
+    volatility: 0.24,
+  },
+  {
+    id: 'healthcare',
+    name: '医药',
+    traits: ['刚需防御', '政策敏感', '波动适中'],
+    strongCycles: ['recession', 'stagflation', 'loose'],
+    weakCycles: ['tight'],
+    volatility: 0.13,
+  },
+  {
+    id: 'new-energy',
+    name: '新能源',
+    traits: ['政策成长双驱动', '产业周期强', '回撤较大'],
+    strongCycles: ['recovery', 'loose'],
+    weakCycles: ['tight', 'recession', 'stagflation'],
+    volatility: 0.26,
+  },
+  {
+    id: 'metals',
+    name: '有色',
+    traits: ['大宗商品周期', '通胀敏感', '需求复苏受益'],
+    strongCycles: ['recovery', 'overheat', 'stagflation'],
+    weakCycles: ['recession', 'tight'],
+    volatility: 0.23,
+  },
+  {
+    id: 'financials',
+    name: '金融',
+    traits: ['利率驱动', '稳大盘', '估值修复'],
+    strongCycles: ['overheat', 'tight', 'recovery'],
+    weakCycles: ['loose', 'recession'],
+    volatility: 0.14,
+  },
+  {
+    id: 'defense',
+    name: '军工',
+    traits: ['事件驱动', '政策兜底', '震荡期韧性'],
+    strongCycles: ['stagflation', 'recession', 'tight'],
+    weakCycles: ['overheat'],
+    volatility: 0.18,
+  },
+  {
+    id: 'agriculture',
+    name: '农业',
+    traits: ['通胀避险', '气候事件驱动', '抗周期'],
+    strongCycles: ['stagflation', 'recession'],
+    weakCycles: ['loose', 'overheat'],
+    volatility: 0.12,
+  },
+]
